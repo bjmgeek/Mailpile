@@ -46,7 +46,7 @@ class LocalMailSource(BaseMailSource):
 
     def open(self):
         with self._lock:
-            mailboxes = self.my_config.mailbox.values()
+            mailboxes = list(self.my_config.mailbox.values())
             if self.watching == len(mailboxes):
                 return True
             else:
@@ -91,7 +91,7 @@ class LocalMailSource(BaseMailSource):
             except (OSError, IOError):
                 pass
         if mt:
-            return '%20.20d' % (0x10000000000 - long(mt))
+            return '%20.20d' % (0x10000000000 - int(mt))
         else:
             return BaseMailSource._mailbox_sort_key(self, mbx)
 
@@ -99,8 +99,8 @@ class LocalMailSource(BaseMailSource):
         mtszs = []
         for p in self._data_paths(mbx):
             try:
-                mt = long(os.path.getmtime(p))
-                sz = long(os.path.getsize(p))
+                mt = int(os.path.getmtime(p))
+                sz = int(os.path.getsize(p))
                 mtszs.append('%s/%s' % (mt, sz))
             except (OSError, IOError):
                 pass

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 # Copyright (C) 2018 Jack Dodds & Mailpile ehf.
 # This code is part of Mailpile and is hereby released under the
 # Gnu Affero Public Licence v.3 - see ../../COPYING and ../../AGPLv3.txt.

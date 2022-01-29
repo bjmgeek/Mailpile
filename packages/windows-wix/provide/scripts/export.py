@@ -10,7 +10,7 @@ def bind(build):
         of { dependency: export_path }.
         '''
 
-        for dependency, export_path in build.config(keyword).items():
+        for dependency, export_path in list(build.config(keyword).items()):
             build.log().info("Exporting '{}' to '{}'...".format(dependency,
                                                                 export_path))
             dep_path = build.depend(dependency)

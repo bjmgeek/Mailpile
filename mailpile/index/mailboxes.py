@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import email.parser
 import json
 import traceback
@@ -37,7 +37,7 @@ class MailboxIndex(BaseIndex):
 
     def _update_keymap(self):
         try:
-            mailbox_keys = self.mailbox.keys()
+            mailbox_keys = list(self.mailbox.keys())
             mailbox_ptrs = [self.mailbox.get_msg_ptr(self.mbx_mid, i)
                             for i in mailbox_keys]
             for ptr in mailbox_ptrs:

@@ -21,7 +21,7 @@ GLOBAL_KEY_CACHE = {}
 
 def _PRUNE_GLOBAL_KEY_CACHE():
     global GLOBAL_KEY_CACHE
-    for k in GLOBAL_KEY_CACHE.keys()[10:]:
+    for k in list(GLOBAL_KEY_CACHE.keys())[10:]:
         del GLOBAL_KEY_CACHE[k]
 
 

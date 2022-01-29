@@ -48,7 +48,7 @@ To Do:
 
 """
 
-from __future__ import print_function
+
 
 # This module is part of the spambayes project, which is Copyright 2002-2007
 # The Python Software Foundation and is covered by the Python Software
@@ -102,7 +102,7 @@ __all__ = ['OptionsClass',
 MultiContainerTypes = (tuple, list)
 try:
     import types
-    types.StringTypes
+    (str,)
 except AttributeError:
     # This is python3
 
@@ -179,7 +179,7 @@ class Option(object):
     def is_valid_single(self, value):
         '''Return True iff value is a valid value for this option.
         Use when multiple values are not allowed.'''
-        if type(self.allowed_values) == types.TupleType:
+        if type(self.allowed_values) == tuple:
             if value in self.allowed_values:
                 return True
             else:
@@ -254,7 +254,7 @@ class Option(object):
         strval.append("\t<td>%s</td>" % \
                       ", ".join([str(s) for s in self.valid_input()]))
         default = self.default()
-        if isinstance(default, types.TupleType):
+        if isinstance(default, tuple):
             default = ", ".join([str(s) for s in default])
         else:
             default = str(default)
@@ -277,7 +277,7 @@ class Option(object):
         if svt == type(value):
             # already the correct type
             return value
-        if type(self.allowed_values) == types.TupleType and \
+        if type(self.allowed_values) == tuple and \
            value in self.allowed_values:
             # already correct type
             return value
@@ -290,17 +290,17 @@ class Option(object):
         if self.multiple_values_allowed():
             # This will fall apart if the allowed_value is a tuple,
             # but not a homogenous one...
-            if isinstance(self.allowed_values, types.StringTypes):
+            if isinstance(self.allowed_values, (str,)):
                 vals = list(self._split_values(value))
             else:
-                if isinstance(value, types.TupleType):
+                if isinstance(value, tuple):
                     vals = list(value)
                 else:
                     vals = value.split()
             if len(self.default_value) > 0:
                 to_type = type(self.default_value[0])
             else:
-                to_type = types.StringType
+                to_type = bytes
             for i in range(0, len(vals)):
                 vals[i] = self._convert(vals[i], to_type)
             return tuple(vals)
@@ -313,17 +313,17 @@ class Option(object):
         if to_type == type(value):
             # already the correct type
             return value
-        if to_type == types.IntType:
+        if to_type == int:
             return locale.atoi(value)
-        if to_type == types.FloatType:
+        if to_type == float:
             return locale.atof(value)
-        if to_type in types.StringTypes:
+        if to_type in (str,):
             return str(value)
         raise TypeError("Invalid type.")
 
     def unconvert(self):
         '''Convert value from the appropriate type to a string.'''
-        if type(self.value) in types.StringTypes:
+        if type(self.value) in (str,):
             # nothing to do
             return self.value
         if self.is_boolean():
@@ -332,12 +332,12 @@ class Option(object):
                 return "True"
             else:
                 return "False"
-        if type(self.value) == types.TupleType:
+        if type(self.value) == tuple:
             if len(self.value) == 0:
                 return ""
             if len(self.value) == 1:
                 v = self.value[0]
-                if type(v) == types.FloatType:
+                if type(v) == float:
                     return locale.str(self.value[0])
                 return str(v)
             # We need to separate out the items
@@ -352,7 +352,7 @@ class Option(object):
             # the end so that this will crash and die if none of
             # the separators works <wink>.
             if self.delimiter is None:
-                if type(self.allowed_values) == types.TupleType:
+                if type(self.allowed_values) == tuple:
                     self.delimiter = ' '
                 else:
                     v0 = self.value[0]
@@ -370,7 +370,7 @@ class Option(object):
                     # cache this so we don't always need to do the above
                     self.delimiter = sep
             for v in self.value:
-                if type(v) == types.FloatType:
+                if type(v) == float:
                     v = locale.str(v)
                 else:
                     v = str(v)
@@ -389,9 +389,9 @@ class Option(object):
         # considered valid input (and 0 and 1 don't look as nice)
         # So, just for the 2.2 people, we have this helper function
         try:
-            if type(self.allowed_values) == types.TupleType and \
+            if type(self.allowed_values) == tuple and \
                len(self.allowed_values) > 0 and \
-               type(self.allowed_values[0]) == types.BooleanType:
+               type(self.allowed_values[0]) == bool:
                 return True
             return False
         except AttributeError:
@@ -530,7 +530,7 @@ class OptionsClass(object):
 
     def load_defaults(self, defaults):
         '''Load default values (stored in Options.py).'''
-        for section, opts in defaults.items():
+        for section, opts in list(defaults.items()):
             for opt in opts:
                 # If first item of the tuple is a sub-class of Option, then
                 # instantiate that (with the rest as args).  Otherwise,
@@ -555,7 +555,7 @@ class OptionsClass(object):
         not persist over sessions.
         '''
         self.restore_point = {}
-        for key, opt_obj in self._options.iteritems():
+        for key, opt_obj in self._options.items():
             self.restore_point[key] = opt_obj.get()
 
     def revert_to_restore_point(self):
@@ -566,7 +566,7 @@ class OptionsClass(object):
         effect.  If new options have been added since set_restore_point,
         their values are not effected.
         '''
-        for key, value in self.restore_point.iteritems():
+        for key, value in self.restore_point.items():
             self._options[key].set(value)
 
     def merge_files(self, file_list):
@@ -578,8 +578,8 @@ class OptionsClass(object):
         self.set(section, option, value)
 
     def merge_file(self, filename):
-        import ConfigParser
-        c = ConfigParser.ConfigParser()
+        import configparser
+        c = configparser.ConfigParser()
         c.read(filename)
         for sect in c.sections():
             for opt in c.options(sect):
@@ -741,7 +741,7 @@ class OptionsClass(object):
     def sections(self):
         '''Return an alphabetical list of all the sections.'''
         all = []
-        for sect, opt in self._options.keys():
+        for sect, opt in list(self._options.keys()):
             if sect not in all:
                 all.append(sect)
         all.sort()
@@ -750,7 +750,7 @@ class OptionsClass(object):
     def options_in_section(self, section):
         '''Return an alphabetical list of all the options in this section.'''
         all = []
-        for sect, opt in self._options.keys():
+        for sect, opt in list(self._options.keys()):
             if sect == section:
                 all.append(opt)
         all.sort()
@@ -760,7 +760,7 @@ class OptionsClass(object):
         '''Return an alphabetical list of all the options, optionally
         prefixed with [section_name]'''
         all = []
-        for sect, opt in self._options.keys():
+        for sect, opt in list(self._options.keys()):
             if prepend_section_name:
                 all.append('[' + sect + ']' + opt)
             else:
@@ -771,7 +771,7 @@ class OptionsClass(object):
     def display(self, add_comments=False):
         '''Display options in a config file form.'''
         output = StringIO()
-        keys = self._options.keys()
+        keys = list(self._options.keys())
         keys.sort()
         currentSection = None
         for sect, opt in keys:
@@ -805,7 +805,7 @@ class OptionsClass(object):
             output.write(getattr(opt, formatter)(section))
             return output.getvalue()
 
-        all = self._options.keys()
+        all = list(self._options.keys())
         all.sort()
         for sect, opt in all:
             if section is not None and sect != section:
@@ -853,7 +853,7 @@ IMAP_FOLDER = r"[^,]+"
 #   where number represents the number of CHAR8 octets
 # but this is too complex for us at the moment.
 IMAP_ASTRING = []
-for _i in xrange(1, 128):
+for _i in range(1, 128):
     if chr(_i) not in ['"', '\\', '\n', '\r']:
         IMAP_ASTRING.append(chr(_i))
 del _i

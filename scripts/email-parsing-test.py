@@ -16,7 +16,7 @@
 # This parser is NOT fully RFC2822 compliant - in particular it will get
 # confused by nested comments (see FIXME in tests below).
 #
-from __future__ import print_function
+
 import sys
 import traceback
 

@@ -1,8 +1,8 @@
-from __future__ import print_function
+
 try:
-    import cStringIO as StringIO
+    import io as StringIO
 except ImportError:
-    import StringIO
+    import io
 
 import poplib
 import socket
@@ -118,7 +118,7 @@ class POP3Mailbox(Mailbox):
     def _refresh(self):
         with self._lock:
             self._keys = None
-            self.iterkeys()
+            iter(self.keys())
 
     def __setitem__(self, key, message):
         """Replace the keyed message; raise KeyError if it doesn't exist."""
@@ -126,7 +126,7 @@ class POP3Mailbox(Mailbox):
 
     def _get(self, key, _bytes=None):
         with self._lock:
-            if key not in self.iterkeys():
+            if key not in iter(self.keys()):
                 raise KeyError('Invalid key: %s' % key)
 
             self._connect()
@@ -172,12 +172,12 @@ class POP3Mailbox(Mailbox):
 
     def get_file(self, key):
         """Return a file-like representation or raise a KeyError."""
-        return StringIO.StringIO(self._get(key))
+        return io.StringIO(self._get(key))
 
     def get_msg_size(self, key):
         with self._lock:
             self._connect()
-            if key not in self.iterkeys():
+            if key not in iter(self.keys()):
                 raise KeyError('Invalid key: %s' % key)
             ok, info, octets = self._pop3.list(self._km[key]).split()
             return int(octets)
@@ -187,7 +187,7 @@ class POP3Mailbox(Mailbox):
         #        messages at once.
         with self._lock:
             self._connect()
-            if key not in self.iterkeys():
+            if key not in iter(self.keys()):
                 raise KeyError('Invalid key: %s' % key)
             ok = self._pop3.dele(self._km[key])
             self._refresh()
@@ -213,11 +213,11 @@ class POP3Mailbox(Mailbox):
 
     def __contains__(self, key):
         """Return True if the keyed message exists, False otherwise."""
-        return key in self.iterkeys()
+        return key in iter(self.keys())
 
     def __len__(self):
         """Return a count of messages in the mailbox."""
-        return len(self.iterkeys())
+        return len(iter(self.keys()))
 
     def flush(self):
         """Write any pending changes to the disk."""
@@ -341,19 +341,19 @@ if __name__ == "__main__":
         def __init__(self, *args, **kwargs):
             def mkcmd(rval):
                 def r(rv):
-                    if isinstance(rv, (str, unicode)) and rv[0] != '+':
+                    if isinstance(rv, str) and rv[0] != '+':
                         raise poplib.error_proto(rv)
                     return rv
 
                 def cmd(*args, **kwargs):
-                    if isinstance(rval, (str, unicode, list, tuple, dict)):
+                    if isinstance(rval, (str, list, tuple, dict)):
                         return r(rval)
                     else:
                         return r(rval(self, *args, **kwargs))
 
                 return cmd
             for cmd, rval in dict_merge(self.DEFAULT_RESULTS, self.RESULTS
-                                        ).iteritems():
+                                        ).items():
                 self.__setattr__(cmd, mkcmd(rval))
 
         def list(self, which=None):

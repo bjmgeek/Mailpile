@@ -1,5 +1,5 @@
-from __future__ import print_function
-import cStringIO
+
+import io
 import email
 import random
 import re
@@ -7,7 +7,7 @@ import rfc822
 import time
 import threading
 import traceback
-from urllib import quote, unquote
+from urllib.parse import quote, unquote
 
 import mailpile.util
 from mailpile.crypto.gpgi import GnuPG
@@ -76,16 +76,16 @@ class MailIndex(BaseIndex):
 
     @classmethod
     def l2m(self, line):
-        return line.decode('utf-8').split(u'\t')
+        return line.decode('utf-8').split('\t')
 
     # A translation table for message parts stored in the index, consists of
     # a mapping from unicode ordinals to either another unicode ordinal or
     # None, to remove a character. By default it removes the ASCII control
     # characters and replaces tabs and newlines with spaces.
     NORM_TABLE = dict([(i, None) for i in range(0, 0x20)], **{
-        ord(u'\t'): ord(u' '),
-        ord(u'\r'): ord(u' '),
-        ord(u'\n'): ord(u' '),
+        ord('\t'): ord(' '),
+        ord('\r'): ord(' '),
+        ord('\n'): ord(' '),
         0x7F: None
     })
 
@@ -93,8 +93,8 @@ class MailIndex(BaseIndex):
     def m2l(self, message):
         # Normalize the message before saving it so we can be sure that we will
         # be able to read it back later.
-        parts = [unicode(p).translate(self.NORM_TABLE) for p in message]
-        return (u'\t'.join(parts)).encode('utf-8')
+        parts = [str(p).translate(self.NORM_TABLE) for p in message]
+        return ('\t'.join(parts)).encode('utf-8')
 
     def load(self, session=None):
         self.INDEX = []
@@ -416,7 +416,7 @@ class MailIndex(BaseIndex):
             if reset:
                 event.data['rescan'] = {}
             progress = event.data.get('rescan', {})
-            if not progress.keys():
+            if not list(progress.keys()):
                 reset = True
         else:
             progress = {}
@@ -470,7 +470,7 @@ class MailIndex(BaseIndex):
                                 ) % (mailbox_idx, mailbox_fn, e),
                           error=True)
 
-        if len(self.PTRS.keys()) == 0:
+        if len(list(self.PTRS.keys())) == 0:
             self.update_ptrs_and_msgids(session)
 
         messages = sorted(mbox.keys())
@@ -495,7 +495,7 @@ class MailIndex(BaseIndex):
         })
 
         added = updated = 0
-        last_date = long(start_time)
+        last_date = int(start_time)
         not_done_yet = 'NOT DONE YET'
         if reverse:
             messages.reverse()
@@ -558,7 +558,7 @@ class MailIndex(BaseIndex):
                 for ui in range(0, len(messages)):
                     msg_ptr = mbox.get_msg_ptr(mailbox_idx, messages[ui])
                     existing_ptrs.add(msg_ptr)
-                for msg_ptr in self.PTRS.keys():
+                for msg_ptr in list(self.PTRS.keys()):
                     if (msg_ptr[:MBX_ID_LEN] == mailbox_idx and
                             msg_ptr not in existing_ptrs):
                         self._remove_location(session, msg_ptr)
@@ -604,7 +604,7 @@ class MailIndex(BaseIndex):
             msg_ptr = msg_ptr or mbox.get_msg_ptr(mailbox_idx, msg_mbox_idx)
 
         added = updated = 0
-        last_date = last_date or long(time.time())
+        last_date = last_date or int(time.time())
         progress = progress or self._get_scan_progress(mailbox_idx,
                                                        event=event)
 
@@ -613,12 +613,12 @@ class MailIndex(BaseIndex):
                              % (mailbox_idx, msg_mbox_idx))
         try:
             if msg_data:
-                msg_fd = cStringIO.StringIO(msg_data)
+                msg_fd = io.StringIO(msg_data)
                 msg_metadata_kws = msg_metadata_kws or []
             elif lazy:
                 msg_data = mbox.get_bytes(msg_mbox_idx, 10240)
                 msg_data = msg_data.split('\r\n\r\n')[0].split('\n\n')[0]
-                msg_fd = cStringIO.StringIO(msg_data)
+                msg_fd = io.StringIO(msg_data)
                 msg_bytes = mbox.get_msg_size(msg_mbox_idx)
                 msg_metadata_kws = mbox.get_metadata_keywords(msg_mbox_idx)
             else:
@@ -657,7 +657,7 @@ class MailIndex(BaseIndex):
                 msg, msg_metadata_kws,
                 last_date + 1, mailbox_idx, process_new, apply_tags,
                 lazy_body, msg_info)
-            last_date = long(msg_info[self.MSG_DATE], 36)
+            last_date = int(msg_info[self.MSG_DATE], 36)
             added += 1
 
         progress['added'] = progress.get('added', 0) + added
@@ -811,7 +811,7 @@ class MailIndex(BaseIndex):
         msg_metadata_kws = email.get_metadata_kws()
         msg_id = msg_info[self.MSG_ID]
         mailbox_idx = msg_info[self.MSG_PTRS].split(',')[0][:MBX_ID_LEN]
-        default_date = long(msg_info[self.MSG_DATE], 36)
+        default_date = int(msg_info[self.MSG_DATE], 36)
 
         (msg_ts, msg_to, msg_cc, msg_subj, msg_body, tags
          ) = self._extract_info_and_index(session, mailbox_idx,
@@ -968,14 +968,14 @@ class MailIndex(BaseIndex):
             # Can we do plain GMail style subject-based threading?
             subj = msg_info[self.MSG_SUBJECT].lower()
             subj = subj.replace('re: ', '')  # FIXME: i18n?
-            date = long(msg_info[self.MSG_DATE], 36)
+            date = int(msg_info[self.MSG_DATE], 36)
             if subj.strip() != '':
                 # FIXME: Is this too aggressive? Make configurable?
-                for midx in reversed(range(max(0, msg_idx_pos - 150),
-                                           msg_idx_pos)):
+                for midx in reversed(list(range(max(0, msg_idx_pos - 150),
+                                           msg_idx_pos))):
                     try:
                         m_info = self.get_msg_at_idx_pos(midx)
-                        m_date = long(m_info[self.MSG_DATE], 36)
+                        m_date = int(m_info[self.MSG_DATE], 36)
                         m_subj = m_info[self.MSG_SUBJECT]
                         if ((m_date < date) and  # FIXME: i18n?
                                 (m_subj.lower().replace('re: ', '') == subj)):
@@ -1169,7 +1169,7 @@ class MailIndex(BaseIndex):
         keywordmap = {}
         msg_idx_list = [msg_mid]
         for kw in keywords:
-            keywordmap[unicode(kw)] = msg_idx_list
+            keywordmap[str(kw)] = msg_idx_list
 
         import mailpile.plugins.tags
         ftypes = set(mailpile.plugins.tags.FILTER_TYPES)
@@ -1183,11 +1183,11 @@ class MailIndex(BaseIndex):
                                     keywords=keywordmap)) > 0):
                 for t in tags.split():
                     for fmt in ('%s:in', '%s:tag'):
-                        kw = unicode(fmt % t[1:])
+                        kw = str(fmt % t[1:])
                         if kw in keywordmap:
                             del keywordmap[kw]
                     if t[0] != '-':
-                        keywordmap[unicode('%s:in' % t[1:])] = msg_idx_list
+                        keywordmap[str('%s:in' % t[1:])] = msg_idx_list
 
         return set(keywordmap.keys())
 
@@ -1292,7 +1292,7 @@ class MailIndex(BaseIndex):
                 keywords.extend([t + ':att' for t
                                  in re.findall(WORD_REGEXP, att.lower())])
                 att_kws = []
-                for kw, ext_list in ATT_EXTS.iteritems():
+                for kw, ext_list in ATT_EXTS.items():
                     ext = att.lower().rsplit('.', 1)[-1]
                     if ext in ext_list:
                         keywords.append('%s:has' % kw)
@@ -1422,7 +1422,7 @@ class MailIndex(BaseIndex):
             keywords.append('%s:mua' % headerprints['mua'].split()[0].lower())
 
         is_list = False
-        for key in msg.keys():
+        for key in list(msg.keys()):
             key_lower = key.lower()
             if key_lower.startswith('list-'):
                 is_list = True
@@ -1566,7 +1566,7 @@ class MailIndex(BaseIndex):
                 # FIXME: we just ignore garbage
                 pass
 
-        self.config.command_cache.mark_dirty(set([u'mail:all']) | keywords)
+        self.config.command_cache.mark_dirty(set(['mail:all']) | keywords)
         return keywords, snippet
 
     def get_msg_at_idx_pos_uncached(self, msg_idx):
@@ -1594,7 +1594,7 @@ class MailIndex(BaseIndex):
 
         # The timestamp we keep partially intact, to not completely break
         # ordering within theads. This may not really be necessary.
-        ts = long(info[self.MSG_DATE], 36)
+        ts = int(info[self.MSG_DATE], 36)
         info[self.MSG_DATE] = b36(ts - (ts % (3600 * 24)))
 
         # FIXME: Remove from threads? This may break threading. :(
@@ -1618,7 +1618,7 @@ class MailIndex(BaseIndex):
         GlobalPostingList.Append(session, 'deleted:is', [b36(msg_idx)])
 
     def update_msg_sorting(self, msg_idx, msg_info):
-        for order, sorter in self.SORT_ORDERS.iteritems():
+        for order, sorter in self.SORT_ORDERS.items():
             self.INDEX_SORT[order][msg_idx] = sorter(self, msg_info)
 
     def set_msg_at_idx_pos(self, msg_idx, msg_info, original_line=None):
@@ -1639,11 +1639,11 @@ class MailIndex(BaseIndex):
         self.update_msg_tags(msg_idx, msg_info)
 
         if not original_line:
-            dirty_tags = [u'%s:in' % self.config.tags[t].slug for t in
+            dirty_tags = ['%s:in' % self.config.tags[t].slug for t in
                           self.get_tags(msg_info=msg_info)]
             self.config.command_cache.mark_dirty(
-                [u'mail:all', u'%s:msg' % msg_idx,
-                 u'%s:thread' % int(msg_thr_mid, 36)] + dirty_tags)
+                ['mail:all', '%s:msg' % msg_idx,
+                 '%s:thread' % int(msg_thr_mid, 36)] + dirty_tags)
             CachedSearchResultSet.DropCaches(msg_idxs=[msg_idx])
             self.MODIFIED.add(msg_idx)
             try:
@@ -1766,9 +1766,9 @@ class MailIndex(BaseIndex):
 
         try:
             self.config.command_cache.mark_dirty(
-                [u'mail:all', u'%s:in' % self.config.tags[tag_id].slug] +
-                [u'%s:msg' % e_idx for e_idx in added] +
-                [u'%s:thread' % int(mid, 36) for mid in threads])
+                ['mail:all', '%s:in' % self.config.tags[tag_id].slug] +
+                ['%s:msg' % e_idx for e_idx in added] +
+                ['%s:thread' % int(mid, 36) for mid in threads])
         except:
             pass
         return added
@@ -1828,9 +1828,9 @@ class MailIndex(BaseIndex):
 
         try:
             self.config.command_cache.mark_dirty(
-                [u'%s:in' % self.config.tags[tag_id].slug] +
-                [u'%s:msg' % e_idx for e_idx in removed] +
-                [u'%s:thread' % int(mid, 36) for mid in threads])
+                ['%s:in' % self.config.tags[tag_id].slug] +
+                ['%s:msg' % e_idx for e_idx in removed] +
+                ['%s:thread' % int(mid, 36) for mid in threads])
         except:
             pass
         return removed
@@ -1934,7 +1934,7 @@ class MailIndex(BaseIndex):
                 elif term.startswith('body:'):
                     rt.extend(hits(term[5:]))
                 elif term == 'all:mail':
-                    rt.extend(range(0, len(self.INDEX)))
+                    rt.extend(list(range(0, len(self.INDEX))))
                 elif term in ('to:me', 'cc:me', 'from:me'):
                     vcards = self.config.vcards
                     emails = []
@@ -2024,7 +2024,7 @@ class MailIndex(BaseIndex):
         return srs
 
     def _freshness_sorter(self, msg_info):
-        ts = long(msg_info[self.MSG_DATE], 36)
+        ts = int(msg_info[self.MSG_DATE], 36)
         for tid in self.get_tags(msg_info=msg_info):
             if tid in self._sort_freshness_tags:
                 return ts + self.FRESHNESS_SORT_BOOST
@@ -2033,7 +2033,7 @@ class MailIndex(BaseIndex):
     FRESHNESS_SORT_BOOST = (5 * 24 * 3600)
     SORT_ORDERS = {
         'freshness': _freshness_sorter,
-        'date': lambda s, mi: long(mi[s.MSG_DATE], 36),
+        'date': lambda s, mi: int(mi[s.MSG_DATE], 36),
 # FIXME: The following are disabled for now for being memory hogs
 #       'from': lambda s, mi: s.mi[s.MSG_FROM]),
 #       'subject': lambda s, mi: s.mi[s.MSG_SUBJECT]),
@@ -2043,7 +2043,7 @@ class MailIndex(BaseIndex):
         self._sort_freshness_tags = [tag._key for tag in
                                      self.config.get_tags(type='unread')]
         self.INDEX_SORT = {}
-        for order, sorter in self.SORT_ORDERS.iteritems():
+        for order, sorter in self.SORT_ORDERS.items():
             self.INDEX_SORT[order] = []
 
     def sort_results(self, session, results, how):

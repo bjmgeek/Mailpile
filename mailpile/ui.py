@@ -19,7 +19,7 @@ import sys
 import tempfile
 import time
 import traceback
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from collections import defaultdict
 from json import JSONEncoder
 from jinja2 import TemplateError, TemplateSyntaxError, TemplateNotFound
@@ -87,7 +87,7 @@ class NoColors:
 
     def replace_line(self, text, chars=None):
         pad = ' ' * max(0, min(self.max_width,
-                               self.max_width-(chars or len(unicode(text)))))
+                               self.max_width-(chars or len(str(text)))))
         return '%s%s\r' % (text, pad)
 
     def clean(self, text):
@@ -171,7 +171,7 @@ class Completer(object):
     def _available_opts(self, text):
         opts = ([s.SYNOPSIS[1] for s in mailpile.commands.COMMANDS] +
                 [s.SYNOPSIS[2] for s in mailpile.commands.COMMANDS] +
-                [t.name.lower() for t in self.session.config.tags.values()])
+                [t.name.lower() for t in list(self.session.config.tags.values())])
         return sorted([o for o in opts if o and o.startswith(text)])
 
     def _autocomplete(self, text, state):
@@ -248,7 +248,7 @@ class UserInteraction:
             c, clip = self.term.BLUE, 78
 
         try:
-            unicode_text = unicode(text[-clip:]).encode('utf-8', 'replace')
+            unicode_text = str(text[-clip:]).encode('utf-8', 'replace')
         except UnicodeDecodeError:
             unicode_text = 'ENCODING ERROR'
 
@@ -380,7 +380,7 @@ class UserInteraction:
     # Higher level command-related methods
     def _display_result(self, ttype, result):
         with self.term:
-            sys.stdout.write(unicode(result).encode('utf-8').rstrip())
+            sys.stdout.write(str(result).encode('utf-8').rstrip())
             sys.stdout.write('\n')
 
     def start_command(self, cmd, args, kwargs):
@@ -427,7 +427,7 @@ class UserInteraction:
             if self.render_mode in ('json', 'as.json'):
                 return self._display_result('json', result.as_('json'))
             if self.render_mode in ('text', 'as.text'):
-                return self._display_result('text', unicode(result))
+                return self._display_result('text', str(result))
             if self.render_mode in ('csv', 'as.csv'):
                 return self._display_result('csv', result.as_csv())
 
@@ -483,7 +483,7 @@ class UserInteraction:
         """Render data as JSON"""
         class NoFailEncoder(JSONEncoder):
             def default(self, obj):
-                if isinstance(obj, (list, dict, str, unicode,
+                if isinstance(obj, (list, dict, str,
                                     int, float, bool, type(None))):
                     return JSONEncoder.default(self, obj)
                 else:
@@ -712,7 +712,7 @@ class CapturingUserInteraction(UserInteraction):
         self.captured = ''
 
     def _display_result(self, ttype, result):
-        self.captured = unicode(result)
+        self.captured = str(result)
 
 
 class RawHttpResponder:
@@ -734,7 +734,7 @@ class RawHttpResponder:
         if length is not None:
             headers.append(('Content-Length', '%s' % length))
         if disposition and filename:
-            encfilename = urllib.quote(filename.encode("utf-8"))
+            encfilename = urllib.parse.quote(filename.encode("utf-8"))
             headers.append(('Content-Disposition',
                             '%s; filename*=UTF-8\'\'%s' % (disposition,
                                                            encfilename)))

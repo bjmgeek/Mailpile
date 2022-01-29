@@ -75,7 +75,7 @@ class ExportMail(Command):
         # Exporting messages without their threads barely makes any
         # sense.
         if not flat:
-            for i in reversed(range(0, len(msg_idxs))):
+            for i in reversed(list(range(0, len(msg_idxs)))):
                 mi = msg_idxs[i]
                 msg_idxs[i:i+1] = [int(m[idx.MSG_MID], 36)
                                    for m in idx.get_conversation(msg_idx=mi)]

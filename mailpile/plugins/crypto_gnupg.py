@@ -1,9 +1,9 @@
-from __future__ import print_function
+
 import copy
 import datetime
 import re
 import time
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from email import encoders
 from email.mime.base import MIMEBase
 
@@ -78,7 +78,7 @@ class ContentTxf(EmailTransform):
             try:
                 gnupg = gnupg or GnuPG(self.config, event=GetThreadEvent())
                 seckeys = dict([(uid["email"], fp) for fp, key
-                                in gnupg.list_secret_keys().iteritems()
+                                in gnupg.list_secret_keys().items()
                                 if key["capabilities_map"].get("encrypt")
                                 and key["capabilities_map"].get("sign")
                                 for uid in key["uids"]])
@@ -107,7 +107,7 @@ class ContentTxf(EmailTransform):
                 keys = gnupg.address_to_keys(AddressHeaderParser(sender).addresses_list()[0])
 
             key_count = 0
-            for fp, key in keys.iteritems():
+            for fp, key in keys.items():
                 if not any(key["capabilities_map"].values()):
                     continue
                 # We should never really hit this more than once. But if we
@@ -208,7 +208,7 @@ class GPGKeySearch(Command):
     class CommandResult(Command.CommandResult):
         def as_text(self):
             if self.result:
-                return '\n'.join(["%s: %s <%s>" % (keyid, x["name"], x["email"]) for keyid, det in self.result.iteritems() for x in det["uids"]])
+                return '\n'.join(["%s: %s <%s>" % (keyid, x["name"], x["email"]) for keyid, det in self.result.items() for x in det["uids"]])
             else:
                 return _("No results")
 
@@ -267,7 +267,7 @@ class GPGKeyImport(Command):
                 key_data.append(file.read())
         for key_url in key_urls:
             with ConnBroker.context(need=[ConnBroker.OUTGOING_HTTP]):
-                uo = urllib2.urlopen(key_url)
+                uo = urllib.request.urlopen(key_url)
             key_data.append(uo.read())
 
         rv = self._gnupg().import_keys('\n'.join(key_data))
@@ -591,7 +591,7 @@ class GPGCheckKeys(Search):
         good_keys = {}
         secret_keys = self._gnupg().list_secret_keys()
 
-        for fprint, info in secret_keys.iteritems():
+        for fprint, info in secret_keys.items():
             k_info = {
                 'description': None,
                 'key': fprint,

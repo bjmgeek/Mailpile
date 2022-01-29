@@ -21,7 +21,7 @@ _GUIS = {}
 
 
 def UpdateGUIState():
-    for gui in _GUIS.values():
+    for gui in list(_GUIS.values()):
         gui.change_state()
 
 
@@ -210,7 +210,7 @@ class GuiOMaticConnection(threading.Thread):
 
         all_new = set([])
         all_new_new = set([])
-        for tag, new_in_tag, new_new_in_tag in notify.values():
+        for tag, new_in_tag, new_new_in_tag in list(notify.values()):
             all_new |= new_in_tag
             all_new_new |= new_new_in_tag
         unread = len(all_new)
@@ -221,13 +221,13 @@ class GuiOMaticConnection(threading.Thread):
             #        Tell the user more about it.
             pass
 
-        tag_count = len(notify.keys())
+        tag_count = len(list(notify.keys()))
         if (tag_count == 0) and (count == 0):
             message=_('No new mail, {num} messages total.'
                       ).format(num=len(self.config.index.INDEX))
 
         elif tag_count == 1:
-            tag, new_msgs, new_new_msgs = notify.values()[0]
+            tag, new_msgs, new_new_msgs = list(notify.values())[0]
             if new_new_msgs and not summarize:
                 message=_('{tagName}: {new} new messages ({num} unread)'
                           ).format(new=len(new_new_msgs),

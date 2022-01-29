@@ -74,7 +74,7 @@ _plugins.register_config_section('filters', ["Filters", {
 
 
 def GetFilters(cfg, filter_on=None, types=FILTER_TYPES[:1]):
-    filters = cfg.filters.keys()
+    filters = list(cfg.filters.keys())
     filters.sort(key=lambda k: int(k, 36))
     flist = []
     tset = set(types)
@@ -100,7 +100,7 @@ def FilterMove(cfg, filter_id, filter_new_id):
     ffrm = int(filter_id, 36)
     fto = int(filter_new_id, 36)
     if ffrm > fto:
-        for fid in reversed(range(fto, ffrm)):
+        for fid in reversed(list(range(fto, ffrm))):
             swap(b36(fid + 1), b36(fid))
     elif ffrm < fto:
         for fid in range(ffrm, fto):
@@ -137,27 +137,27 @@ def GetTags(cfg, tn=None, default=None, **kwargs):
         except (KeyError, IndexError, AttributeError):
             pass
         if not results:
-            tv = cfg.tags.values()
+            tv = list(cfg.tags.values())
             tags = ([t._key for t in tv if t.slug.lower() == tn] or
                     [t._key for t in tv if t.name.lower() == tn])
             results.append(tags)
 
     if kwargs:
-        tv = tv or cfg.tags.values()
+        tv = tv or list(cfg.tags.values())
         for kw in kwargs:
             want = kwargs[kw]
             if not isinstance(want, (list, tuple)):
                 want = [want]
-            want = [unicode(w).lower() for w in want]
+            want = [str(w).lower() for w in want]
             if kw == 'tid':
                 results.append([str(k) for k in want if str(k) in cfg.tags])
             else:
                 want = set(want)
                 if '*' in want:
-                    results.append(cfg.tags.keys())
+                    results.append(list(cfg.tags.keys()))
                 else:
                     results.append([t._key for t in tv
-                                    if (unicode(t[kw]).lower() in want)])
+                                    if (str(t[kw]).lower() in want)])
 
     if (tn or kwargs) and not results:
         return default
@@ -184,13 +184,13 @@ def GuessTags(cfg, name):
     # When guessing tag/folder names not in localized language
     # let's also try some common mappings/translations
     # FIXME: decide how to tread 'trash' folders on servers
-    TYPICAL_FOLDER_NAMES = {u'gesendet': 'sent',
-                            u'gelöscht': 'trash',
-                            u'entwürfe': 'drafts',
-                            u'spamverdacht': 'spam',
-                            u'éléments envoyés': 'sent',
-                            u'éléments supprimés': 'trash',
-                            u'brouillons': 'drafts',
+    TYPICAL_FOLDER_NAMES = {'gesendet': 'sent',
+                            'gelöscht': 'trash',
+                            'entwürfe': 'drafts',
+                            'spamverdacht': 'spam',
+                            'éléments envoyés': 'sent',
+                            'éléments supprimés': 'trash',
+                            'brouillons': 'drafts',
     }
     try:
         tname = TYPICAL_FOLDER_NAMES[name]
@@ -210,7 +210,7 @@ def Slugify(tag_name, tags=None):
                      banned=CleanText.NONDNS.replace('/', '')
                      ).clean.lower() or 'tag'
     n = 1
-    while tags and slug in [t.slug for t in tags.values()]:
+    while tags and slug in [t.slug for t in list(tags.values())]:
         n += 1
         slug = Slugify('%s.%s' % (tag_name or 'tag', n))
     return slug
@@ -268,7 +268,7 @@ mailpile.config.manager.ConfigManager.filter_delete = FilterDelete
 class TagCommand(Command):
     def _reorder_all_tags(self):
         taglist = [(t.display, t.display_order, t.slug, t._key)
-                   for t in self.session.config.tags.values()]
+                   for t in list(self.session.config.tags.values())]
         taglist.sort()
         order = 1
         for td, tdo, ts, tid in taglist:
@@ -572,7 +572,7 @@ class AddTag(TagCommand):
                 return self._error('Invalid tag slug: %s' % slug)
 
         # Check Tag is unique
-        for tag in config.tags.values():
+        for tag in list(config.tags.values()):
             if tag.slug in slugs:
                 return self._error('Tag already exists: %s/%s' % (tag.slug,
                                                                   tag.name))
@@ -612,10 +612,10 @@ class ListTags(TagCommand):
 
     def cache_requirements(self, result):
         if result:
-            return set([u'!config'] +
-                       [u'%s:in' % ti['slug'] for ti in result.result['tags']])
+            return set(['!config'] +
+                       ['%s:in' % ti['slug'] for ti in result.result['tags']])
         else:
-            return set([u'!config'])
+            return set(['!config'])
 
     class CommandResult(TagCommand.CommandResult):
         def as_text(self):
@@ -792,9 +792,9 @@ class TagAutomation(Command):
     def _tags(self, args):
         tags = self.session.config.tags
         if '-all' in args:
-            for tag in tags.values():
+            for tag in list(tags.values()):
                 yield tag
-        for tid, tag in tags.iteritems():
+        for tid, tag in tags.items():
             if tid in args or tag.slug in args:
                 yield tag
 
@@ -1030,7 +1030,7 @@ class DeleteFilter(FilterCommand):
         args = list(self.args)
         args.sort(key=lambda fid: int(fid, 36))
 
-        filter_keys = config.get('filters', {}).keys()
+        filter_keys = list(config.get('filters', {}).keys())
         removed = 0
         for fid in reversed(args):
             if fid in filter_keys:
@@ -1058,7 +1058,7 @@ class ListFilters(Command):
     class CommandResult(Command.CommandResult):
         def as_text(self):
             if self.result is False:
-                return unicode(self.result)
+                return str(self.result)
             return '\n'.join([('%3.3s %-10s %-18s %-18s %s'
                                ) % (r['fid'], r['type'],
                                     r['terms'], r['human_tags'], r['comment'])

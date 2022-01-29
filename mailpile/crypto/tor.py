@@ -155,7 +155,7 @@ class Tor(threading.Thread):
                 stdout=subprocess.PIPE, bufsize=1)
             hasher.wait()
             expr = re.compile('([\d]{2}:[\w]{58})')
-            match = filter(None, map(expr.match, hasher.stdout))[0]
+            match = [_f for _f in map(expr.match, hasher.stdout) if _f][0]
             passhash = match.group(1)
             return passhash
         except:
@@ -182,7 +182,7 @@ class Tor(threading.Thread):
 
     def relaunch_hidden_services(self):
         hidden_services = copy.copy(self.hidden_services)
-        for onion, (portmap, key_t, key_c) in hidden_services.iteritems():
+        for onion, (portmap, key_t, key_c) in hidden_services.items():
             if key_t and key_c:
                 self.launch_hidden_service(portmap, key_t, key_c)
             else:

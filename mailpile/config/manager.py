@@ -1,6 +1,6 @@
-from __future__ import print_function
+
 import copy
-import cPickle
+import pickle
 import io
 import jinja2
 import json
@@ -12,11 +12,11 @@ import re
 import threading
 import fasteners
 import traceback
-import ConfigParser
+import configparser
 import errno
-
-from urllib import quote, unquote, getproxies
-from urlparse import urlparse
+from urllib.parse import quote, unquote
+from urllib.request import getproxies
+from urllib.parse import urlparse
 
 try:
     from appdirs import AppDirs
@@ -258,7 +258,7 @@ class ConfigManager(ConfigDict):
                 if plugin in self.plugins.available():
                     self.sys.plugins.append(plugin)
         else:
-            for pos in self.sys.plugins.keys():
+            for pos in list(self.sys.plugins.keys()):
                 name = self.sys.plugins[pos]
                 if name in self.plugins.RENAMED:
                     self.sys.plugins[pos] = self.plugins.RENAMED[name]
@@ -596,7 +596,7 @@ class ConfigManager(ConfigDict):
         self.prepare_workers(daemons=self.daemons_started(), changed=True)
 
         # Invalidate command cache contents that depend on the config
-        self.command_cache.mark_dirty([u'!config'])
+        self.command_cache.mark_dirty(['!config'])
 
     def _find_mail_source(self, mbx_id, path=None):
         if path:
@@ -605,7 +605,7 @@ class ConfigManager(ConfigDict):
                 return self.sources[path[5:].split('/')[0]]
             if path[:4] == 'src:':
                 return self.sources[path[4:].split('/')[0]]
-        for src in self.sources.values():
+        for src in list(self.sources.values()):
             # Note: we cannot test 'mbx_id in ...' because of case sensitivity.
             if src.mailbox[FormatMbxId(mbx_id)] is not None:
                 return src
@@ -617,7 +617,7 @@ class ConfigManager(ConfigDict):
             mailboxes = [(FormatMbxId(k),
                           self.sys.mailbox[k],
                           self._find_mail_source(k))
-                          for k in self.sys.mailbox.keys()
+                          for k in list(self.sys.mailbox.keys())
                           if self.sys.mailbox[k] != '/dev/null']
         except (AttributeError):
             # Config not loaded, nothing to see here
@@ -683,8 +683,8 @@ class ConfigManager(ConfigDict):
                         streamer.verify(_raise=IOError)
                 else:
                     data = fd.read()
-            return cPickle.loads(data)
-        except (cPickle.UnpicklingError, IOError, EOFError, OSError):
+            return pickle.loads(data)
+        except (pickle.UnpicklingError, IOError, EOFError, OSError):
             if delete_if_corrupt:
                 safe_remove(pickle_path)
             raise IOError('Load/unpickle failed: %s' % pickle_path)
@@ -697,11 +697,11 @@ class ConfigManager(ConfigDict):
                                     dir=self.tempfile_dir(),
                                     header_data={'subject': pfn},
                                     name='save_pickle') as fd:
-                cPickle.dump(obj, fd, protocol=0)
+                pickle.dump(obj, fd, protocol=0)
                 fd.save(ppath)
         else:
             with open(ppath, 'wb') as fd:
-                cPickle.dump(obj, fd, protocol=0)
+                pickle.dump(obj, fd, protocol=0)
 
     def _mailbox_info(self, mailbox_id, prefer_local=True):
         try:
@@ -804,13 +804,13 @@ class ConfigManager(ConfigDict):
 
     def find_mboxids_and_sources_by_path(self, *paths):
         def _au(p):
-            return unicode(p[1:] if (p[:5] == '/src:') else
+            return str(p[1:] if (p[:5] == '/src:') else
                            p if (p[:4] == 'src:') else
                            vfs.abspath(p))
         abs_paths = dict((_au(p), [p]) for p in paths)
         with self._lock:
-            for sid, src in self.sources.iteritems():
-                for mid, info in src.mailbox.iteritems():
+            for sid, src in self.sources.items():
+                for mid, info in src.mailbox.items():
                     umfn = _au(self.sys.mailbox[mid])
                     if umfn in abs_paths:
                         abs_paths[umfn].append((mid, src))
@@ -819,22 +819,22 @@ class ConfigManager(ConfigDict):
                         if lmfn in abs_paths:
                             abs_paths[lmfn].append((mid, src))
 
-            for mid, mfn in self.sys.mailbox.iteritems():
+            for mid, mfn in self.sys.mailbox.items():
                 umfn = _au(mfn)
                 if umfn in abs_paths:
-                    if umfn[:4] == u'src:':
+                    if umfn[:4] == 'src:':
                         src = self.sources.get(umfn[4:].split('/')[0])
                     else:
                         src = None
                     abs_paths[umfn].append((mid, src))
 
-        return dict((p[0], p[1]) for p in abs_paths.values() if p[1:])
+        return dict((p[0], p[1]) for p in list(abs_paths.values()) if p[1:])
 
     def open_mailbox_path(self, session, path, register=False, raw_open=False):
         path = vfs.abspath(path)
         mbox = mbx_mid = mbx_src = None
         with self._lock:
-            msmap = self.find_mboxids_and_sources_by_path(unicode(path))
+            msmap = self.find_mboxids_and_sources_by_path(str(path))
             if msmap:
                 mbx_mid, mbx_src = list(msmap.values())[0]
 
@@ -856,7 +856,7 @@ class ConfigManager(ConfigDict):
                     mbox = OpenMailbox(path.raw_fp, self, create=False)
 
                 if register:
-                    mbx_mid = self.sys.mailbox.append(unicode(path))
+                    mbx_mid = self.sys.mailbox.append(str(path))
                     mbox = None  # Force a re-open below
 
                 elif mbox:
@@ -965,7 +965,7 @@ class ConfigManager(ConfigDict):
                        no_ask=False, no_cache=False):
         if not no_cache:
             keyidL = keyid.lower()
-            for sid in self.secrets.keys():
+            for sid in list(self.secrets.keys()):
                 if sid.endswith(keyidL):
                     secret = self.secrets[sid]
                     if secret.policy == 'always-ask':
@@ -1210,7 +1210,7 @@ class ConfigManager(ConfigDict):
         if self.sys.proxy.protocol == 'system':
             proxy_list = getproxies()
             for proto in ('socks5', 'socks4', 'http'):
-                for url in proxy_list.values():
+                for url in list(proxy_list.values()):
                     if url.lower().startswith(proto+'://'):
                         try:
                             p, host, port = url.replace('/', '').split(':')
@@ -1318,7 +1318,7 @@ class ConfigManager(ConfigDict):
 
         # Start the other workers
         if daemons:
-            for src_id in config.sources.keys():
+            for src_id in list(config.sources.keys()):
                 try:
                     config.get_mail_source(src_id, start=True, changed=changed)
                 except (ValueError, KeyError):
@@ -1421,7 +1421,7 @@ class ConfigManager(ConfigDict):
             from mailpile.plugins import PluginManager
 
             def interval(i):
-                if isinstance(i, (str, unicode)):
+                if isinstance(i, str):
                     i = config.walk(i)
                 return int(i)
 
@@ -1436,13 +1436,13 @@ class ConfigManager(ConfigDict):
                         config.background, job,
                         lambda: func(config.background))
                 return wrapped
-            for job, (i, f) in PluginManager.FAST_PERIODIC_JOBS.iteritems():
+            for job, (i, f) in PluginManager.FAST_PERIODIC_JOBS.items():
                 config.cron_worker.add_task(job, interval(i), wrap_fast(f))
-            for job, (i, f) in PluginManager.SLOW_PERIODIC_JOBS.iteritems():
+            for job, (i, f) in PluginManager.SLOW_PERIODIC_JOBS.items():
                 config.cron_worker.add_task(job, interval(i), wrap_slow(f))
 
     def _unlocked_get_all_workers(config):
-        return (config.mail_sources.values() +
+        return (list(config.mail_sources.values()) +
                 config.other_workers +
                 [config.http_worker,
                  config.tor_worker,

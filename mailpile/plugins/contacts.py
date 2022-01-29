@@ -56,7 +56,7 @@ class VCardCommand(Command):
                     for line in card:
                         key = line.name
                         data = re.sub(b64re, _('(BASE64 ENCODED DATA)'),
-                                      unicode(line[key]))
+                                      str(line[key]))
                         attrs = ', '.join([('%s=%s' % (k, v))
                                            for k, v in line.attrs
                                            if k not in ('pid',)])
@@ -237,7 +237,7 @@ class AddVCard(VCardCommand):
                 names.extend(['' for i in range(len(names), len(emails))])
                 notes = self.data.get("note", [])[:]
                 notes.extend(['' for i in range(len(notes), len(emails))])
-                triplets = zip(emails, names, notes)
+                triplets = list(zip(emails, names, notes))
             elif self.data.get('mid'):
                 mids = self.data.get('mid')
                 triplets = self._add_from_messages(
@@ -632,13 +632,13 @@ class ContactImport(Command):
         idx = self._idx()  # Make sure VCards are all loaded
         session, config = self.session, self.session.config
 
-        if not format in PluginManager.CONTACT_IMPORTERS.keys():
+        if not format in list(PluginManager.CONTACT_IMPORTERS.keys()):
             session.ui.error("No such import format")
             return False
 
         importer = PluginManager.CONTACT_IMPORTERS[format]
 
-        if not all([x in kwargs.keys() for x in importer.required_parameters]):
+        if not all([x in list(kwargs.keys()) for x in importer.required_parameters]):
             session.ui.error(
                 _("Required parameter missing. Required parameters "
                   "are: %s") % ", ".join(importer.required_parameters))
@@ -646,7 +646,7 @@ class ContactImport(Command):
 
         allparams = importer.required_parameters + importer.optional_parameters
 
-        if not all([x in allparams for x in kwargs.keys()]):
+        if not all([x in allparams for x in list(kwargs.keys())]):
             session.ui.error(
                 _("Unknown parameter passed to importer. "
                   "Provided %s; but known parameters are: %s"
@@ -672,7 +672,7 @@ class ContactImporters(Command):
 
     def command(self):
         res = []
-        for iname, importer in CONTACT_IMPORTERS.iteritems():
+        for iname, importer in CONTACT_IMPORTERS.items():
             r = {}
             r["short_name"] = iname
             r["format_name"] = importer.format_name
@@ -723,7 +723,7 @@ class AddressSearch(VCardCommand):
             if len(addresses) and time.time() > deadline:
                 break
 
-        return addresses.values()
+        return list(addresses.values())
 
     def _index_addresses(self, cfg, terms, vcard_addresses, count, deadline):
         existing = dict([(k['address'].lower(), k) for k in vcard_addresses])
@@ -754,7 +754,7 @@ class AddressSearch(VCardCommand):
         # search for matching senders or recipients, give medium priority.
         # Note: This is more CPU intensive, so we do this last.
         if len(matches) < (count * 5):
-            for msg_idx in xrange(max(0, len(index.INDEX)-5000),
+            for msg_idx in range(max(0, len(index.INDEX)-5000),
                                   len(index.INDEX)):
                 msg_info = index.get_msg_at_idx_pos(msg_idx)
                 tags = set(msg_info[index.MSG_TAGS].split(','))
@@ -858,7 +858,7 @@ def ProfileVCard(parent):
 
         def _sanity_check(self, kind, triplets):
             route_id = self.data.get('route_id', [None])[0]
-            if (route_id or [k for k in self.data.keys() if k[:5] in
+            if (route_id or [k for k in list(self.data.keys()) if k[:5] in
                              ('route', 'smtp-', 'sourc', 'secur', 'local')]):
                 if len(triplets) > 1 or kind != 'profile':
                     raise ValueError('Can only configure detailed settings '
@@ -911,7 +911,7 @@ def ProfileVCard(parent):
 
         def _configure_mail_sources(self, vcard):
             config = self.session.config
-            sources = [r[7:].rsplit('-', 1)[0] for r in self.data.keys()
+            sources = [r[7:].rsplit('-', 1)[0] for r in list(self.data.keys())
                        if r.startswith('source-') and r.endswith('-protocol')]
             for src_id in sources:
                 prefix = 'source-%s-' % src_id
@@ -947,7 +947,7 @@ def ProfileVCard(parent):
                     if not path:
                         raise ValueError(_('Mail spool not found'))
 
-                    if path in config.sys.mailbox.values():
+                    if path in list(config.sys.mailbox.values()):
                         raise ValueError(_('Already configured: %s') % path)
                     else:
                         mailbox_idx = config.sys.mailbox.append(path)
@@ -1384,10 +1384,10 @@ class RemoveProfile(ProfileVCard(RemoveVCard)):
             if config.sources[source_id].username:
                 usernames.add(config.sources[source_id].username)
 
-        for msid, source in config.sources.iteritems():
+        for msid, source in config.sources.items():
             if (source.username in usernames) and (source.profile != vcard.random_uid):
                 usernames.remove(source.username)
-        for mrid, route in config.routes.iteritems():
+        for mrid, route in config.routes.items():
             if (route.username in usernames) and (mrid != vcard.route):
                 usernames.remove(source.username)
 
@@ -1425,7 +1425,7 @@ class RemoveProfile(ProfileVCard(RemoveVCard)):
                 config.mail_sources[source_id].event.flags = Event.COMPLETE
 
             # Keep the reference to our local mailboxes in sys.mailbox
-            for mbx_id, mbx_info in src.mailbox.iteritems():
+            for mbx_id, mbx_info in src.mailbox.items():
                 if mbx_info.primary_tag:
                     tids.add(mbx_info.primary_tag)
                 if mbx_info.local and (mbx_info.path[:1] == '@'):

@@ -1,7 +1,7 @@
-from __future__ import print_function
+
 import os.path
 try:
-    import urllib2
+    import urllib.request, urllib.error, urllib.parse
 except ImportError:
     import urllib.request as urllib2
 import logging
@@ -47,13 +47,13 @@ class Cache(object):
         context = ssl.create_default_context()
         try:
             try:
-                source = urllib2.urlopen(url, context=context)
-            except urllib2.URLError as e:
+                source = urllib.request.urlopen(url, context=context)
+            except urllib.error.URLError as e:
                 if "CERTIFICATE_VERIFY_FAILED" in str(e):
                     logger.warning(
                         "Cannot verify ssl cert for '{}', delegating authenticity to digest...".format(url))
                     context = ssl._create_unverified_context()
-                    source = urllib2.urlopen(url, context=context)
+                    source = urllib.request.urlopen(url, context=context)
                 else:
                     raise
             cls.chunk_stream(source.read, writer, **kwargs)

@@ -48,7 +48,7 @@ def consume(iterator, n=None):
 
 
 def xml_attrs( xml_element, **attrs ):
-    consume( itertools.starmap( xml_element.set, attrs.items() ) )
+    consume( itertools.starmap( xml_element.set, list(attrs.items()) ) )
 
 def xml_append( xml_parent, xml_element_type, **attrs ):
     result = ET.SubElement( xml_parent, xml_element_type )
@@ -189,7 +189,7 @@ class WixConfig( object ):
 
         # Setup: unpack groups
         #
-        for key, group in self.config['groups'].items():
+        for key, group in list(self.config['groups'].items()):
             self.scan_group( key, **group )
 
         try:
@@ -239,12 +239,12 @@ class WixConfig( object ):
         if flavor not in self.flavor_properties:
             logger.warn( "Unrecognized wix UI type: {}".format( flavor ) )
 
-        for key, value in self.flavor_properties.get( flavor, {} ).items():
+        for key, value in list(self.flavor_properties.get( flavor, {} ).items()):
             xml_append( self.product, 'Property',
                         Id = key,
                         Value = value )
 
-        for key, value in variables.items():
+        for key, value in list(variables.items()):
             xml_append( self.product, 'WixVariable',
                         Id = key,
                         Value = value )

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 #
 # This module implements a safer version of Popen and a safe wrapper around
 # os.pipe(), to avoid deadlocks caused by file descriptors being shared
@@ -25,7 +25,7 @@ from __future__ import print_function
 import os
 import subprocess
 import sys
-import thread
+import _thread
 import threading
 
 import mailpile.platforms
@@ -222,7 +222,7 @@ class Safe_Popen(Unsafe_Popen):
             self._SAFE_POPEN_hold_lock = False
             try:
                 SERIALIZE_POPEN_LOCK.release()
-            except thread.error:
+            except _thread.error:
                 pass
 
     def communicate(self, *args, **kwargs):

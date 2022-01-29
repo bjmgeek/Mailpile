@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import time
 
 from mailpile.i18n import gettext as _

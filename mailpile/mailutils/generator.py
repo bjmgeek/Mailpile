@@ -55,7 +55,7 @@
 
 
 """Classes to generate plain text from a message object tree."""
-from __future__ import print_function
+
 
 __all__ = ['Generator', 'DecodedGenerator']
 
@@ -65,7 +65,7 @@ import time
 import random
 import warnings
 
-from cStringIO import StringIO
+from io import StringIO
 from email.header import Header
 
 from mailpile.i18n import gettext as _
@@ -81,7 +81,7 @@ fcre = re.compile(r'^From ', re.MULTILINE)
 def _is8bitstring(s):
     if isinstance(s, str):
         try:
-            unicode(s, 'us-ascii')
+            str(s, 'us-ascii')
         except UnicodeError:
             return True
     return False
@@ -203,7 +203,7 @@ class Generator:
     #
 
     def _write_headers(self, msg):
-        for h, v in msg.items():
+        for h, v in list(msg.items()):
             print('%s:' % h, end=' ', file=self._fp)
             if self._maxheaderlen == 0:
                 # Explicit no-wrapping
@@ -240,7 +240,7 @@ class Generator:
         payload = msg.get_payload()
         if payload is None:
             return
-        if not isinstance(payload, basestring):
+        if not isinstance(payload, str):
             raise TypeError('string payload expected: %s' % type(payload))
         if self._mangle_from_:
             payload = fcre.sub('>From ', payload)
@@ -257,7 +257,7 @@ class Generator:
         subparts = msg.get_payload()
         if subparts is None:
             subparts = []
-        elif isinstance(subparts, basestring):
+        elif isinstance(subparts, str):
             # e.g. a non-strict parse of a message with no starting boundary.
             self._fp.write(subparts)
             return

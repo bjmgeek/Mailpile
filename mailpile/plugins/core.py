@@ -12,7 +12,7 @@ import socket
 import subprocess
 import sys
 import traceback
-import thread
+import _thread
 import threading
 import time
 import webbrowser
@@ -172,7 +172,7 @@ class Rescan(Command):
         importers = []
         try:
             self._progress(_('Rescanning: %s') % 'vcards')
-            for importer in PluginManager.VCARD_IMPORTERS.values():
+            for importer in list(PluginManager.VCARD_IMPORTERS.values()):
                 if (len(which_spec) > 1 and
                         which_spec[1] != importer.SHORT_NAME):
                     continue
@@ -313,7 +313,7 @@ class Rescan(Command):
                 ocount = msg_count - 1
                 while ocount != msg_count:
                     ocount = msg_count
-                    src_ids = config.sources.keys()
+                    src_ids = list(config.sources.keys())
                     src_ids.sort(key=lambda k: random.randint(0, 100))
                     for src_id in src_ids:
                         try:
@@ -699,9 +699,9 @@ class ProgramStatus(Command):
         for thread in threads:
             try:
                 if hasattr(thread, 'lock'):
-                    locks.append([thread, 'lock', thread.lock])
+                    locks.append([thread, 'lock', _thread.lock])
                 if hasattr(thread, '_lock'):
-                    locks.append([thread, '_lock', thread._lock])
+                    locks.append([thread, '_lock', _thread._lock])
                 if locks and hasattr(locks[-1][-1], 'locked'):
                     locks[-1][-1] = locks[-1][-1].locked()
                 elif locks and hasattr(locks[-1][-1], '_is_owned'):
@@ -716,7 +716,7 @@ class ProgramStatus(Command):
                           'timestamp': v.ts,
                           'userdata': v.data,
                           'userinfo': v.auth} for k, v in
-                         mailpile.auth.SESSION_CACHE.iteritems()],
+                         mailpile.auth.SESSION_CACHE.items()],
             'pl_timers': mailpile.postinglist.TIMERS,
             'delay': play_nice_with_threads(sleep=False),
             'live': mailpile.util.LIVE_USER_ACTIVITIES,
@@ -791,7 +791,7 @@ class CronStatus(Command):
             _("Displayed CRON schedule"),
             result={
                 'last_run': config.cron_worker.last_run,
-                'jobs': config.cron_worker.schedule.values()})
+                'jobs': list(config.cron_worker.schedule.values())})
 
 
 class HealthCheck(Command):
@@ -980,7 +980,7 @@ class ListDir(Command):
                 info = vfs.getinfo(f, self.session.config)
                 info['icon'] = ''
                 for k in info.get('flags', []):
-                    info['flag_%s' % unicode(k).lower().replace('.', '_')
+                    info['flag_%s' % str(k).lower().replace('.', '_')
                          ] = True
             except (OSError, IOError, UnicodeDecodeError):
                 info['flag_error'] = True
@@ -1017,9 +1017,9 @@ class ListDir(Command):
             return self._error(_('Failed to list: %s') % e)
 
         id_src_map = self.session.config.find_mboxids_and_sources_by_path(
-            *[unicode(f['path']) for f in file_list])
+            *[str(f['path']) for f in file_list])
         for info in file_list:
-            path = unicode(info['path'])
+            path = str(info['path'])
             mid_src = id_src_map.get(path)
             if mid_src:
                 mid, src = mid_src
@@ -1174,7 +1174,7 @@ class ConfigSet(Command):
             # Make sure section exists
             ops.append((section, '!CREATE_SECTION'))
 
-        for var in self.data.keys():
+        for var in list(self.data.keys()):
             if (var in ('_section', '_method', 'context', 'csrf')
                    or var.startswith('ui_')):
                 continue
@@ -1269,7 +1269,7 @@ class ConfigAdd(Command):
         args = list(self.args)
         ops = []
 
-        for var in self.data.keys():
+        for var in list(self.data.keys()):
             parts = ('.' in var) and var.split('.') or var.split('/')
             if parts[0] in config.rules:
                 ops.append((var, self.data[var][0]))
@@ -1328,10 +1328,10 @@ class ConfigUnset(Command):
         def unset(cfg, key):
             if isinstance(cfg[key], dict):
                 if '_any' in cfg[key].rules:
-                    for skey in cfg[key].keys():
+                    for skey in list(cfg[key].keys()):
                         del cfg[key][skey]
                 else:
-                    for skey in cfg[key].keys():
+                    for skey in list(cfg[key].keys()):
                         unset(cfg[key], skey)
             elif isinstance(cfg[key], list):
                 cfg[key] = []
@@ -1816,7 +1816,7 @@ class Quit(Command):
         if self.session.config.http_worker:
             self.session.config.http_worker.quit()
 
-        thread.interrupt_main()
+        _thread.interrupt_main()
         return self._success(_('Shutting down...'))
 
 
@@ -1951,7 +1951,7 @@ class Help(Command):
             last_rank = None
             cmds = self.result['commands']
             width = self.result.get('width', 8)
-            ckeys = cmds.keys()
+            ckeys = list(cmds.keys())
             ckeys.sort(key=lambda k: (cmds[k][3], cmds[k][0]))
             arg_width = min(50, max(14, self.session.ui.term.max_width-70))
             for c in ckeys:
@@ -2078,7 +2078,7 @@ class HelpVars(Help):
             variables = []
             what = config[cat]
             if isinstance(what[2], dict):
-                for ii, i in what[2].iteritems():
+                for ii, i in what[2].items():
                     stype = (
                         _('(subsection)') if isinstance(i[1], dict) else
                         '|'.join(i[1]) if isinstance(i[1], (list, tuple)) else

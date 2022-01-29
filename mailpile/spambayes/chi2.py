@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import math as _math
 import random
 
@@ -105,7 +105,7 @@ def main():
             self.next = baserandom()
 
         def random(self):
-            result = self.next
+            result = self.__next__
             i = int(result * self.n)
             self.next = self.tab[i]
             self.tab[i] = self.baserandom()
@@ -145,8 +145,8 @@ def main():
     s = Hist(20, lo=0.0, hi=1.0)
     score = Hist(20, lo=0.0, hi=1.0)
 
-    for _i in xrange(5000):
-        ps = [random() for _j in xrange(50)]
+    for _i in range(5000):
+        ps = [random() for _j in range(50)]
         s1, h1, score1 = judge(ps + [bias] * warp)
         s.add(s1)
         h.add(h1)

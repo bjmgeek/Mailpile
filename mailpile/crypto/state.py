@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 #. Common crypto state and structure
 import copy
 
@@ -65,7 +65,7 @@ class CryptoInfo(dict):
         dict.__setitem__(self, item, value)
 
     def _overwrite_with(self, ci):
-        for k in self.keys():
+        for k in list(self.keys()):
             del self[k]
         self.update(ci)
 

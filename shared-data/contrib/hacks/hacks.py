@@ -2,7 +2,8 @@ import json
 import os
 import traceback
 from gettext import gettext as _
-from urllib import urlencode, URLopener
+from urllib.parse import urlencode
+from urllib.request import URLopener
 
 import mailpile.auth
 from mailpile.commands import Command
@@ -142,7 +143,7 @@ class ViewMetadata(Hacks):
             'thread_mid': info[idx.MSG_THREAD_MID],
             'parsed': {
                 'body_info': body_info,
-                'date': friendly_datetime(long(info[idx.MSG_DATE], 36)),
+                'date': friendly_datetime(int(info[idx.MSG_DATE], 36)),
                 'tags': ', '.join(ptags),
                 'to': to,
                 'cc': cc,
@@ -212,8 +213,8 @@ class ViewKeywords(Hacks):
         return sorted(list(idx.read_message(
             self.session,
             info[idx.MSG_MID], info[idx.MSG_ID], msg,
-            long(info[idx.MSG_KB], 36) * 1024,
-            long(info[idx.MSG_DATE], 36))[0]))
+            int(info[idx.MSG_KB], 36) * 1024,
+            int(info[idx.MSG_DATE], 36))[0]))
 
     def command(self):
         return self._success(_('Displayed message keywords'),
@@ -303,7 +304,7 @@ class Http(Hacks):
                     (fn, hdrs) = uo.retrieve(url, data=urlencode(pv))
                 else:
                     (fn, hdrs) = uo.retrieve(url)
-            hdrs = unicode(hdrs)
+            hdrs = str(hdrs)
             data = open(fn, 'rb').read().strip()
             if data.startswith('{') and 'application/json' in hdrs:
                 data = json.loads(data)
@@ -330,7 +331,7 @@ class CheckMailbox(Hacks):
 
         mbxids = [a for a in self.args if a[:1] != '-']
         if 'all' in mbxids:
-            mbxids = config.sys.mailbox.keys()
+            mbxids = list(config.sys.mailbox.keys())
 
         results = {}
         errors = {}
@@ -399,7 +400,7 @@ class CheckMailbox(Hacks):
                         if 'x-mp-internal-readonly' in message:
                             result['finalized'].append(key)
 
-                for msg_id, keys in seen.iteritems():
+                for msg_id, keys in seen.items():
                     if len(keys) > 1:
                         result['duplicates'].append([msg_id] + list(keys))
 
@@ -420,13 +421,13 @@ class CheckMailbox(Hacks):
                         result['source_missing'] = []
                         result['source_mismatch'] = []
 
-                        mapped = mbx.source_map.values()
-                        for k in mbx.iterkeys():
+                        mapped = list(mbx.source_map.values())
+                        for k in mbx.keys():
                             if k not in mapped:
                                 result['source_unknown'].append(k)
 
                         counts = [0, len(mapped)]
-                        for sk in mbx.source_map.iteritems():
+                        for sk in mbx.source_map.items():
                             _mark_progress('Comparing', counts)
                             source_id, key = sk
                             try:

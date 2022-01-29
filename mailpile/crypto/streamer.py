@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 #
 # This is code to stream data to or from encrypted storage. If the invoking
 # code us correctly written, it should be able to work with data far in
@@ -1015,7 +1015,7 @@ class PartialDecryptingStreamer(DecryptingStreamer):
 
 if __name__ == "__main__":
     import random  # See! Not in the main module!
-    import StringIO
+    import io
 
     def _assert(val, want=True, msg='assert'):
         if isinstance(want, bool):
@@ -1135,7 +1135,7 @@ U2FsdGVkX19U8G7SKp8QygUusdHZThlrLcI04+jZ9U5kwfsw7bJJ2721dwgIpCUh
 
     print('Legacy (MEP v1) decryption test')
     for legacy in (LEGACY_TEST_1, LEGACY_TEST_2):
-        lfd = StringIO.StringIO(legacy)
+        lfd = io.StringIO(legacy)
         with PartialDecryptingStreamer([], lfd,
                                        mep_key=LEGACY_TEST_KEY) as ds:
             plaintext = ''

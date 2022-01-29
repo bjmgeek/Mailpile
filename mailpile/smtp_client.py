@@ -50,11 +50,11 @@ def sha512_512kCheck(challenge, bits, solution):
 def sha512_512kCollide(challenge, bits, callback1k=None):
     hexchars = bits // 4
     wanted = '0' * hexchars
-    for i in xrange(1, 0x10000):
+    for i in range(1, 0x10000):
         if callback1k is not None:
             callback1k(i)
         challenge_i = '-'.join([str(i), challenge])
-        for j in xrange(0, 1024):
+        for j in range(0, 1024):
             collision = '-'.join([str(j), challenge_i])
             if sha512_512k(collision)[:hexchars] == wanted:
                 return '-'.join(collision.split('-')[:2])
@@ -125,7 +125,7 @@ def _RouteTuples(session, from_to_msg_ev_tuples, test_route=None):
 
                 # Group together recipients that use the same route
                 rid = '/'.join(sorted(['%s' % (k, )
-                                       for k in route.iteritems()]))
+                                       for k in route.items()]))
                 routes[rid] = route
                 rcpts[rid] = rcpts.get(rid, [])
                 rcpts[rid].append(recipient)
@@ -154,7 +154,7 @@ def SendMail(session, msg_mid, from_to_msg_ev_tuples,
 
     for frm, route, to, msg, events in routes:
         for ev in events:
-            ev.data['recipients'] = len(ev.private_data.keys())
+            ev.data['recipients'] = len(list(ev.private_data.keys()))
             ev.data['delivered'] = len([k for k in ev.private_data
                                         if ev.private_data[k]])
 

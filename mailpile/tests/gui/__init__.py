@@ -64,7 +64,7 @@ class SeleniumScreenshotOnExceptionAspecter(type):
     """
 
     def __new__(mcs, name, bases, dict):
-        for key, value in dict.items():
+        for key, value in list(dict.items()):
             if (hasattr(value, "__call__")
                 and key != "__metaclass__"
                 and key.startswith('test')):
@@ -105,7 +105,7 @@ class SeleniumScreenshotOnExceptionAspecter(type):
         return test_call_wrapper_method
 
 
-class MailpileSeleniumTest(MailPileUnittest):
+class MailpileSeleniumTest(MailPileUnittest, metaclass=SeleniumScreenshotOnExceptionAspecter):
     """Base class for all selenium GUI tests
 
 
@@ -126,7 +126,6 @@ class MailpileSeleniumTest(MailPileUnittest):
         ...         self.driver.save_screenshot('screen2.png')
         ...         self.assertIn('Contacts', self.driver.title)
     """
-    __metaclass__ = SeleniumScreenshotOnExceptionAspecter
 
     DRIVER = None
     http_worker = None

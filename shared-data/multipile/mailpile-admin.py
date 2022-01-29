@@ -6,10 +6,10 @@
 #  - Start or stop a user's Mailpile (in a screen session)
 #  - Function as a CGI script to start Mailpile and reconfigure Apache
 #
-from __future__ import print_function
+
 import argparse
 import cgi
-import ConfigParser
+import configparser
 import copy
 import distutils.spawn
 import getpass
@@ -148,11 +148,11 @@ apache_map_test ok
 
 
 def _escape(string):
-    return json.dumps(unicode(string).encode('utf-8'))[1:-1]
+    return json.dumps(str(string).encode('utf-8'))[1:-1]
 
 
 def _escaped(idict):
-    return dict((k, _escape(v)) for k, v in idict.iteritems())
+    return dict((k, _escape(v)) for k, v in idict.items())
 
 
 def app_arguments_config_arg(ap):
@@ -258,7 +258,7 @@ def parse_config(app_args,
     conf_file = config
     if config:
         if os.path.exists(conf_file):
-            config = ConfigParser.SafeConfigParser()
+            config = configparser.SafeConfigParser()
             config.read([conf_file])
             app_args.set_defaults(**dict(config.items(section)))
         elif conf_parsed and conf_parsed.config:
@@ -401,7 +401,7 @@ def get_user_settings(args, user=None, mailpiles=None):
 
     port = args.port
     if mailpiles and not port:
-        ports = [int(m[2]) for m in mailpiles.values() if m[0] == user]
+        ports = [int(m[2]) for m in list(mailpiles.values()) if m[0] == user]
         if ports:
             port = '%s' % min(ports)
     if not port:
@@ -432,7 +432,7 @@ def discover_mailpiles(mailpiles=None):
         if pid in processes:
             processes[pid].append(listening_hostport)
 
-    for pid, details in processes.iteritems():
+    for pid, details in processes.items():
         username, proc, rss, listening = (details[0], details[1],
                                           details[2], details[3:])
         if listening:
@@ -451,7 +451,7 @@ def _rewritemap(mailpiles):
     rules = []
     added = {}
     count = 1
-    for hostport, details in mailpiles.iteritems():
+    for hostport, details in mailpiles.items():
         user, host, port = details[0:3]
         suffix = ''
         if user in added:

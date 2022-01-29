@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import datetime
 import random
 import threading
@@ -82,7 +82,7 @@ class Cron(threading.Thread):
         # --> Calculate the GCD of the task intervals
         for i in range(2, 61):  # i = second
             # Check if any scheduled task intervals are != 0 mod i
-            filteredTasks = [True for task in self.schedule.values()
+            filteredTasks = [True for task in list(self.schedule.values())
                              if int(task[1]) % i != 0]
             # We can sleep for i seconds if i divides all intervals
             if (len(filteredTasks) == 0):
@@ -116,7 +116,7 @@ class Cron(threading.Thread):
             now = time.time()
             # Check if any of the task is (over)due
             with self.lock:
-                for task_spec in self.schedule.values():
+                for task_spec in list(self.schedule.values()):
                     name, interval, task, last, status = task_spec
                     if (last + interval) <= now:
                         tasksToBeExecuted.append((name, task))

@@ -31,7 +31,7 @@ class dataDigCommand(Command):
     class CommandResult(Command.CommandResult):
         def as_text(self):
             if self.result:
-                return '\n'.join(['\t'.join([unicode(cell) for cell in row])
+                return '\n'.join(['\t'.join([str(cell) for cell in row])
                                   for row in self.result])
             else:
                 return _("Nothing Happened")

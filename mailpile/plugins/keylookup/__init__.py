@@ -16,8 +16,8 @@ import copy
 import math
 import traceback
 import ssl
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 from mailpile.commands import Command
 from mailpile.conn_brokers import Master as ConnBroker
 from mailpile.crypto import gpgi
@@ -113,10 +113,10 @@ def _update_scores(session, key_id, key_info, known_keys_list):
         key_info.scores['Encryption key strength'] = [score, key_strength]
 
     key_info.score = sum(score for source, (score, reason)
-                         in key_info.scores.iteritems())
+                         in key_info.scores.items())
 
     sc, reason = max([(abs(score), reason)
-                     for score, reason in key_info['scores'].values()])
+                     for score, reason in list(key_info['scores'].values())])
     key_info.score_reason = '%s' % reason
 
     log_score = math.log(3 * abs(key_info.score), 3)
@@ -151,7 +151,7 @@ def _normalize_key(session, key_info):
 
 def _mailpile_key_list(gpgi_key_list):
     result = {}
-    for info in gpgi_key_list.values():
+    for info in list(gpgi_key_list.values()):
         mki = MailpileKeyInfo.FromGPGI(info)
         result[mki.summary()] = mki
     return result
@@ -239,7 +239,7 @@ def lookup_crypto_keys(session, address,
             results = {}
 
         # FIXME: This merging of info about keys is probably misguided.
-        for key_id, key_info in results.iteritems():
+        for key_id, key_info in results.items():
             if key_id in found_keys:
                 old_scores = found_keys[key_id].scores
                 old_uids = found_keys[key_id].uids
@@ -256,13 +256,13 @@ def lookup_crypto_keys(session, address,
                 found_keys[key_id] = key_info
             found_keys[key_id].origins.append(h.NAME)
 
-        for key_id in found_keys.keys():
+        for key_id in list(found_keys.keys()):
             _normalize_key(session, found_keys[key_id])
             _update_scores(session, key_id, found_keys[key_id], known_keys_list)
 
         # This updates and sorts ordered_keys in place. This will magically
         # also update the data on the viewable event, because Python.
-        ordered_keys[:] = found_keys.values()
+        ordered_keys[:] = list(found_keys.values())
         ordered_keys.sort(key=lambda k: -k.score)
 
     if only_good:
@@ -437,7 +437,7 @@ class KeyTofu(Command):
             and len(recent_crypto)) or False
 
     def _key_is_trusted(self, fingerprint, known_keys_list):
-        for summary, key_info in known_keys_list.iteritems():
+        for summary, key_info in known_keys_list.items():
             if key_info['fingerprint'] == fingerprint:
                 return (key_info['validity'] in KeyInfo.KEY_TRUSTED_CODES)
         return False
@@ -514,7 +514,7 @@ class KeyTofu(Command):
         global TOFU_CHECK_HISTORY
         now = time.time()
         interval_cutoff = now - tofu_cfg.min_interval
-        for k in TOFU_CHECK_HISTORY.keys():
+        for k in list(TOFU_CHECK_HISTORY.keys()):
             if TOFU_CHECK_HISTORY.get(k, now) < interval_cutoff:
                 del TOFU_CHECK_HISTORY[k]
 
@@ -555,7 +555,7 @@ class KeyTofu(Command):
                     status[email] = 'Have not seen enough PGP messages'
 
         imported = {}
-        for email, (key_id, origins) in should_import.iteritems():
+        for email, (key_id, origins) in should_import.items():
             if 'keytofu' in self.session.config.sys.debug:
                 self.session.ui.debug('keytofu(%s): importing %s from %s'
                                       % (email, key_id, origins))
@@ -589,7 +589,7 @@ class KeyTofu(Command):
         if len(imported) > 0:
             # Update the VCards!
             fingerprints = []
-            for keys in imported.values():
+            for keys in list(imported.values()):
                 fingerprints.extend(k['fingerprint'] for k in keys)
             PGPKeysImportAsVCards(self.session, arg=fingerprints).run()
             # Previous crypto evaluations may now be out of date, so we
@@ -645,14 +645,14 @@ class LookupHandler:
         all_keys = self._lookup(address, strict_email_match=strict_email_match)
         keys = {}
         if get is not None:
-            get = [unicode(g).upper() for g in get]
-        for key_id, key_info in all_keys.iteritems():
-            fprint = unicode(key_info.fingerprint).upper()
+            get = [str(g).upper() for g in get]
+        for key_id, key_info in all_keys.items():
+            fprint = str(key_info.fingerprint).upper()
             summary = key_info.summary()
             if ((get is None) or
                     (fprint and fprint in get) or
                     (summary in get) or
-                    (unicode(key_id).upper() in get)):  # FIXME: This is messy.
+                    (str(key_id).upper() in get)):  # FIXME: This is messy.
                 score, reason = self._score(key_info)
                 vscore, vreason = _score_validity(key_info['validity'])
                 if abs(vscore) > abs(score):
@@ -693,7 +693,7 @@ class KeychainLookupHandler(LookupHandler):
         address = address.lower()
         results = {}
         vcard = self.session.config.vcards.get_vcard(address)
-        for key_id, key_info in self.known_keys.iteritems():
+        for key_id, key_info in self.known_keys.items():
             match = False
             for uid in key_info.uids:
                 if not strict_email_match:
@@ -745,7 +745,7 @@ class KeyserverLookupHandler(LookupHandler):
         return (self.SCORE, _('Found encryption key in keyserver'))
 
     def _lookup_url(self, url_base, address):
-        return "{}?{}".format(url_base, urllib.urlencode({
+        return "{}?{}".format(url_base, urllib.parse.urlencode({
             "search": address,
             "op": "index",
             "fingerprint": "on",
@@ -762,13 +762,13 @@ class KeyserverLookupHandler(LookupHandler):
                                            maxbytes=self.MAX_KEY_SIZE+1)
                 error = None
                 break
-            except urllib2.HTTPError as e:
+            except urllib.error.HTTPError as e:
                 error = str(e)
                 if e.code == 404:
                     # If a server reports the key was not found, let's stop
                     # because the servers are supposed to be in sync.
                     break;
-            except (IOError, urllib2.URLError, ssl.SSLError, ssl.CertificateError) as e:
+            except (IOError, urllib.error.URLError, ssl.SSLError, ssl.CertificateError) as e:
                 error = str(e)
 
         if not error and len(raw_result) > self.MAX_KEY_SIZE:
@@ -789,7 +789,7 @@ class KeyserverLookupHandler(LookupHandler):
             self._gnupg().parse_hpk_response(raw_result.split('\n')))
 
         if strict_email_match:
-            for key in results.keys():
+            for key in list(results.keys()):
                 match = [u for u in results[key].uids
                          if u.email.lower() == address]
                 if not match:
@@ -823,13 +823,13 @@ class KeyserverLookupHandler(LookupHandler):
                                          maxbytes=self.MAX_KEY_SIZE+1)
                 error = None
                 break
-            except urllib2.HTTPError as e:
+            except urllib.error.HTTPError as e:
                 error = e
                 if e.code == 404:
                     # If a server reports the key was not found, let's stop
                     # because the servers are supposed to be in sync.
                     break;
-            except (IOError, urllib2.URLError, ssl.SSLError, ssl.CertificateError) as e:
+            except (IOError, urllib.error.URLError, ssl.SSLError, ssl.CertificateError) as e:
                 error = e
 
         if not key_data:

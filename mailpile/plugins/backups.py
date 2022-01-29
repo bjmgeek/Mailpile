@@ -1,5 +1,5 @@
-from __future__ import print_function
-import cStringIO
+
+import io
 import datetime
 import gzip
 import json
@@ -7,7 +7,7 @@ import os
 import sys
 import time
 import traceback
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import zipfile
 
 from mailpile.auth import VerifyAndStorePassphrase
@@ -29,7 +29,7 @@ _plugins = PluginManager(builtin=__file__)
 
 
 def _gzip(filename, data):
-    gzip_data = cStringIO.StringIO()
+    gzip_data = io.StringIO()
     gzip_obj = gzip.GzipFile(filename, 'w', 9, gzip_data, 0)
     gzip_obj.write(data)
     gzip_obj.close()
@@ -37,12 +37,12 @@ def _gzip(filename, data):
 
 
 def _gunzip(data):
-    with gzip.GzipFile('', 'rb', 0, cStringIO.StringIO(data)) as gzf:
+    with gzip.GzipFile('', 'rb', 0, io.StringIO(data)) as gzf:
         return gzf.read()
 
 
 def _decrypt(data, config):
-    with DecryptingStreamer(cStringIO.StringIO(data),
+    with DecryptingStreamer(io.StringIO(data),
                             mep_key=config.get_master_key()) as fd:
         data = fd.read()
         fd.verify(_raise=IOError)
@@ -63,7 +63,7 @@ class MakeBackup(Command):
         # Not all tags are interesting! Most, but not all.
         keep = {}
         suppress = {}
-        for tid, tag in config.tags.iteritems():
+        for tid, tag in config.tags.items():
             if tag.type in ('tag', 'group', 'attribute', 'inbox', 'drafts',
                             'sent', 'spam', 'read', 'tagged', 'fwded',
                             'replied', 'search', 'profile'):
@@ -79,7 +79,7 @@ class MakeBackup(Command):
             msg_idx_set -= config.index.TAGS.get(tid, set([]))
 
         msg_id_list = [''] * len(config.index.INDEX)
-        for msgid, msg_idx in config.index.MSGIDS.iteritems():
+        for msgid, msg_idx in config.index.MSGIDS.items():
             if msg_idx in msg_idx_set:
                 msg_id_list[msg_idx] = msgid
 
@@ -98,7 +98,7 @@ class MakeBackup(Command):
             backup_fn = 'Mailpile_Backup_%s.zip' % (backup_date,)
 
         # Prep archive!
-        backup_data = cStringIO.StringIO()
+        backup_data = io.StringIO()
         backup_zip = zipfile.ZipFile(backup_data, 'w', zipfile.ZIP_DEFLATED)
         backup_zip.writestr('README.txt', (('\n'.join([
             _("This is a backup of Mailpile v%(ver)s keys and configuration."),
@@ -193,7 +193,7 @@ class MakeBackup(Command):
             what=[a for a in self.args if a not in ('download',)])
 
         if 'download' in self.args:
-            encoded_fn = urllib.quote(backup_fn.encode('utf-8'))
+            encoded_fn = urllib.parse.quote(backup_fn.encode('utf-8'))
             request = html_variables['http_request']
             request.send_http_response(200, 'OK')
             request.send_standard_headers(mimetype='application/zip',
@@ -254,14 +254,14 @@ class RestoreBackup(Command):
                 return True
             elif vfs.mailbox_type(mbx_path, config):
                 return True
-            elif unicode(mbx_path).startswith('/Mailpile$/'):
+            elif str(mbx_path).startswith('/Mailpile$/'):
                 config.create_local_mailstore(
                     self.session, name=mbx_path.raw_fp)
                 return True
             else:
                 return False
 
-        for i, mbx_path in config.sys.mailbox.iteritems():
+        for i, mbx_path in config.sys.mailbox.items():
             mbx_path = FilePath(mbx_path)
             if not path_ok(mbx_path):
                 config.sys.mailbox[i] = '/dev/null'
@@ -307,7 +307,7 @@ class RestoreBackup(Command):
         if backup_data is not None:
             try:
                 if isinstance(backup_data, str):
-                    backup_data = cStringIO.StringIO(backup_data)
+                    backup_data = io.StringIO(backup_data)
                 backup_zip = zipfile.ZipFile(backup_data, 'r')
 
                 # Load and validate metadata (from README.txt)
@@ -363,7 +363,7 @@ class RestoreBackup(Command):
         else:
             message = _('Restore from backup')
 
-        results['available'] = AVAILABLE_BACKUPS.keys()
+        results['available'] = list(AVAILABLE_BACKUPS.keys())
         return self._success(message, result=results)
 
 

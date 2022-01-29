@@ -26,7 +26,7 @@ class MailpileMailbox(UnorderedPicklable(mailbox.Maildir, editable=True)):
         with self._lock:
             mailbox.Maildir._refresh(self)
             # Dotfiles are not mail. Ignore them.
-            for t in [k for k in self._toc.keys() if k.startswith('.')]:
+            for t in [k for k in list(self._toc.keys()) if k.startswith('.')]:
                 del self._toc[t]
 
     def __unicode__(self):

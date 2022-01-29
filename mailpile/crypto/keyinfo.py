@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import time
 import traceback
 
@@ -52,7 +52,7 @@ class RestrictedDict(dict):
 
     def __init__(self, *args, **kwargs):
         dict.__init__(self, *args, **kwargs)
-        for k, (t, d) in self.KEYS.items():
+        for k, (t, d) in list(self.KEYS.items()):
             if k not in self:
                 if t in (list, dict):
                     self[k] = t()
@@ -71,7 +71,7 @@ class RestrictedDict(dict):
                 raise KeyError('Invalid key: %s' % item)
             if not isinstance(value, self.KEYS[item][0]):
                 try:
-                    if isinstance(value, unicode):
+                    if isinstance(value, str):
                         # Value is unicode, we want other: encode, convert
                         value = self.KEYS[item][0](value.encode('utf-8'))
                     elif isinstance(value, str):
@@ -95,9 +95,9 @@ class RestrictedDict(dict):
 
 class KeyUID(RestrictedDict):
     KEYS = {
-        'name':    (unicode, ''),
+        'name':    (str, ''),
         'email':   (str, ''),
-        'comment': (unicode, '')}
+        'comment': (str, '')}
 
     def __repr__(self):
         parts = []
@@ -164,7 +164,7 @@ class KeyInfo(RestrictedDict):
             return self.summary()
         return '{ %s }' % '\n  '.join(
             '%-12s = %s' % (k, self[k])
-            for k in self.keys() if self[k] is not None)
+            for k in list(self.keys()) if self[k] is not None)
 
     def ensure_autocrypt_uid(keyinfo, ac_uid):
         """Ensure we include the email from the Autocrypt header in a UID."""
@@ -248,7 +248,7 @@ class MailpileKeyInfo(KeyInfo):
         'is_pinned':    (bool, False),
         'scores':       (dict, None),
         'score_stars':  (int, 0),
-        'score_reason': (unicode, None),
+        'score_reason': (str, None),
         'score':        (int, 0)})
 
 

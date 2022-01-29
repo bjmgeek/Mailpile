@@ -2,7 +2,7 @@
 #
 # FIXME: Refactor this monster into mailpile.mailutils.*
 #
-from __future__ import print_function
+
 import base64
 import copy
 import email.header
@@ -15,7 +15,7 @@ import os
 import quopri
 import random
 import re
-import StringIO
+import io
 import threading
 import traceback
 from email import encoders
@@ -26,7 +26,7 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from mailpile.util import *
 from platform import system
-from urllib import quote, unquote
+from urllib.parse import quote, unquote
 from datetime import datetime, timedelta
 
 from mailpile.crypto.gpgi import GnuPG
@@ -205,7 +205,7 @@ def ExtractEmailAndName(string):
 def CleanHeaders(msg, copy_all=True, tombstones=False):
     clean_headers = []
     address_headers_lower = [h.lower() for h in Email.ADDRESS_HEADERS]
-    for key, value in msg.items():
+    for key, value in list(msg.items()):
         lkey = key.lower()
 
         # Remove headers we don't want to expose
@@ -262,7 +262,7 @@ def PrepareMessage(config, msg,
 
     # Iterate through headers to figure out what we want to do...
     need_rcpts = not rcpts
-    for hdr, val in msg.items():
+    for hdr, val in list(msg.items()):
         lhdr = hdr.lower()
         if lhdr == 'from':
             sender = sender or val
@@ -548,11 +548,11 @@ class Email(object):
         body_lines = []
 
         # We care about header order and such things...
-        hdrs = dict([(h.lower(), h) for h in tree['headers'].keys()
+        hdrs = dict([(h.lower(), h) for h in list(tree['headers'].keys())
                      if h.lower() not in self.UNEDITABLE_HEADERS])
         for mandate in self.MANDATORY_HEADERS:
             hdrs[mandate.lower()] = hdrs.get(mandate.lower(), mandate)
-        keys = hdrs.keys()
+        keys = list(hdrs.keys())
         keys.sort(key=lambda k: (self.HEADER_ORDER.get(k.lower(), 99), k))
         lowman = [m.lower() for m in self.MANDATORY_HEADERS]
         lowadr = [m.lower() for m in self.ADDRESS_HEADERS]
@@ -565,25 +565,25 @@ class Email(object):
                     adata = AddressHeaderParser(data)
                 strings[lhdr] = adata.normalized()
             elif lhdr in lowman:
-                strings[lhdr] = unicode(data)
+                strings[lhdr] = str(data)
             else:
-                header_lines.append(unicode('%s: %s' % (hdr, data)))
+                header_lines.append(str('%s: %s' % (hdr, data)))
 
         for att in tree['attachments']:
             aid = self._attachment_aid(att)
             strings['attachments'][aid] = (att['filename'] or '(unnamed)')
 
         if not strings['encryption']:
-            strings['encryption'] = unicode(self.config.prefs.crypto_policy)
+            strings['encryption'] = str(self.config.prefs.crypto_policy)
 
         def _fixup(t):
             try:
-                return unicode(t)
+                return str(t)
             except UnicodeDecodeError:
                 return t.decode('utf-8')
 
         strings['headers'] = '\n'.join(header_lines).replace('\r\n', '\n')
-        strings['body'] = unicode(''.join([_fixup(t['data'])
+        strings['body'] = str(''.join([_fixup(t['data'])
                                            for t in tree['text_parts']])
                                   ).replace('\r\n', '\n')
 
@@ -622,7 +622,7 @@ class Email(object):
         if filedata and fn in filedata:
             data = filedata[fn]
         else:
-            if isinstance(fn, unicode):
+            if isinstance(fn, str):
                 fn = fn.encode('utf-8')
             data = open(fn, 'rb').read()
         ctype, encoding = mimetypes.guess_type(fn)
@@ -639,7 +639,7 @@ class Email(object):
         # FS paths are strings of bytes, should be represented as utf-8 for
         # correct header encoding.
         base_fn = os.path.basename(fn)
-        if not isinstance(base_fn, unicode):
+        if not isinstance(base_fn, str):
             base_fn = base_fn.decode('utf-8')
 
         att.add_header('Content-Disposition', 'attachment',
@@ -664,7 +664,7 @@ class Email(object):
             outmsg.encryption_info = EncryptionInfo(bubbly=False)
 
             # Copy over editable headers from the input string, skipping blanks
-            for hdr in newmsg.keys():
+            for hdr in list(newmsg.keys()):
                 if hdr.startswith('Attachment-') or hdr == 'Attachment':
                     pass
                 else:
@@ -677,7 +677,7 @@ class Email(object):
                             outmsg[hdr] = encoded_hdr
 
             # Copy over the uneditable headers from the old message
-            for hdr in oldmsg.keys():
+            for hdr in list(oldmsg.keys()):
                 if ((hdr.lower() not in self.MIME_HEADERS)
                         and (hdr.lower() in self.UNEDITABLE_HEADERS)):
                     outmsg[hdr] = oldmsg[hdr]
@@ -702,7 +702,7 @@ class Email(object):
             # FIXME: Use markdown and template to generate fancy HTML part?
 
             # Copy the attachments we are keeping
-            attachments = [h for h in newmsg.keys()
+            attachments = [h for h in list(newmsg.keys())
                            if h.lower().startswith('attachment')]
             if attachments:
                 oldtree = self.get_message_tree(want=['attachments'])
@@ -1060,7 +1060,7 @@ class Email(object):
                 attributes['thumb'] = True
                 attributes['mimetype'] = 'image/jpeg'
                 attributes['disposition'] = 'inline'
-                thumb = StringIO.StringIO()
+                thumb = io.StringIO()
                 if thumbnail(payload, thumb, height=250):
                     attributes['length'] = thumb.tell()
                     filename, fd = session.ui.open_for_data(
@@ -1145,25 +1145,25 @@ class Email(object):
 
         if (want is None or 'headers' in want) and 'headers' not in tree:
             tree['headers'] = {}
-            for hdr in msg.keys():
+            for hdr in list(msg.keys()):
                 tree['headers'][hdr] = safe_decode_hdr(msg, hdr)
 
         if (want is None or 'headers_lc' in want
                 ) and 'headers_lc' not in tree:
             tree['headers_lc'] = {}
-            for hdr in msg.keys():
+            for hdr in list(msg.keys()):
                 tree['headers_lc'][hdr.lower()] = safe_decode_hdr(msg, hdr)
 
         if (want is None or 'header_list' in want
                 ) and 'header_list' not in tree:
             tree['header_list'] = [(k, safe_decode_hdr(msg, k, hdr=v))
-                                   for k, v in msg.items()]
+                                   for k, v in list(msg.items())]
 
         if (want is None or 'addresses' in want
                 ) and 'addresses' not in tree:
             address_headers_lower = [h.lower() for h in self.ADDRESS_HEADERS]
             tree['addresses'] = {}
-            for hdr in msg.keys():
+            for hdr in list(msg.keys()):
                 hdrl = hdr.lower()
                 if hdrl in address_headers_lower:
                     tree['addresses'][hdrl] = AddressHeaderParser(msg[hdr])

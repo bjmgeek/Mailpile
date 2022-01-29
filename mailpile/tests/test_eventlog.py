@@ -49,7 +49,7 @@ class TestEventlog(MailPileUnittest):
 
     def test_ClassName_unicode(self):
         evt = mailpile.eventlog.Event()
-        u_klass_name = unicode(evt.__class__)
+        u_klass_name = str(evt.__class__)
         kn = mailpile.eventlog._ClassName(u_klass_name)
         self.assertGreater( u_klass_name.find("mailpile"), 0)
         self.assertGreater( kn.find("eventlog.Event"), 0)

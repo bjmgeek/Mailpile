@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 # This implements our IMAP mail source. It has been tested against the
 # following IMAP implementations:
 #
@@ -51,12 +51,12 @@ import traceback
 import time
 from imaplib import IMAP4_SSL, CRLF
 from mailbox import Mailbox, Message
-from urllib import quote, unquote
+from urllib.parse import quote, unquote
 
 try:
-    import cStringIO as StringIO
+    import io as StringIO
 except ImportError:
-    import StringIO
+    import io
 
 import mailpile.mail_source.imap_utf7
 from mailpile.auth import IndirectPassword
@@ -100,7 +100,7 @@ class IMAP_IOError(IOError):
 
 class WithaBool(object):
     def __init__(self, v): self.v = v
-    def __nonzero__(self): return self.v
+    def __bool__(self): return self.v
     def __enter__(self, *a, **kw): return self.v
     def __exit__(self, *a, **kw): return self.v
 
@@ -122,7 +122,7 @@ def _parse_imap(reply):
     pdata = []
     for dline in reply[1]:
         while True:
-            if isinstance(dline, (str, unicode)):
+            if isinstance(dline, str):
                 m = IMAP_TOKEN.match(dline)
             else:
                 print('WARNING: Unparsed IMAP response data: %s' % (dline,))
@@ -409,7 +409,7 @@ class SharedImapMailbox(Mailbox):
         if not test:
             raise IMAP_IOError(error)
 
-    def __nonzero__(self):
+    def __bool__(self):
         if self._broken is not None:
             return not self._broken
         try:
@@ -462,7 +462,7 @@ class SharedImapMailbox(Mailbox):
                 raise KeyError(key)
             self._assert(str(uidv) in imap.mailbox_info('UIDVALIDITY', ['0']),
                          _('Mailbox is out of sync'))
-            info = dict(zip(*[iter(data[1])]*2))
+            info = dict(list(zip(*[iter(data[1])]*2)))
             info['UIDVALIDITY'] = uidv
             info['UID'] = uid
         self._broken = False
@@ -517,7 +517,7 @@ class SharedImapMailbox(Mailbox):
 
     def get_file(self, key):
         info, payload = self.get(key)
-        return StringIO.StringIO(payload)
+        return io.StringIO(payload)
 
     def iterkeys(self):
         self._broken = None
@@ -531,7 +531,7 @@ class SharedImapMailbox(Mailbox):
                 for k in sorted(data))
 
     def keys(self):
-        return list(self.iterkeys())
+        return list(self.keys())
 
     def update_toc(self):
         self._last_updated = time.time()
@@ -546,7 +546,7 @@ class SharedImapMailbox(Mailbox):
         return self.remove(unquote(msg_ptr[MBX_ID_LEN:]))
 
     def get_msg_size(self, key):
-        return long(self.get_info(key).get('RFC822.SIZE', 0))
+        return int(self.get_info(key).get('RFC822.SIZE', 0))
 
     def get_metadata_keywords(self, key):
         # Translate common IMAP flags into the maildir vocabulary
@@ -874,9 +874,9 @@ class ImapMailSource(BaseMailSource):
     def _conn_id(self):
         def e(s):
             try:
-                return unicode(s).encode('utf-8')
+                return str(s).encode('utf-8')
             except UnicodeDecodeError:
-                return unicode(s).encode('utf-8', 'replace')
+                return str(s).encode('utf-8', 'replace')
         return md5_hex('\n'.join([e(self.my_config[k]) for k in
                                   ('host', 'port', 'password', 'username')]))
 
@@ -1015,7 +1015,7 @@ class ImapMailSource(BaseMailSource):
             self.event.data['mailbox_state'] = {mbx._key: uvex}
 
     def _namespace_info(self, path):
-        for which, nslist in self.namespaces.iteritems():
+        for which, nslist in self.namespaces.items():
             for prefix, pathsep in nslist:
                 if path.startswith(prefix):
                     return prefix, pathsep or '/'
@@ -1197,7 +1197,7 @@ class _MockImap(object):
                 return rval
             return cmd
         for cmd, rval in dict_merge(self.DEFAULT_RESULTS, self.RESULTS
-                                    ).iteritems():
+                                    ).items():
             self.__setattr__(cmd, mkcmd(rval))
 
     def __getattr__(self, attr):
@@ -1257,7 +1257,7 @@ if __name__ == "__main__":
         with imap.open(throw=IMAP_IOError) as conn:
             print('%s' % (conn.list(), ))
         mbx = SharedImapMailbox(config, imap, mailbox_path='INBOX')
-        print('%s' % list(mbx.iterkeys()))
+        print('%s' % list(mbx.keys()))
         for key in args:
             info, payload = mbx.get(key)
             print('%s(%d bytes) = %s\n%s' % (mbx.get_msg_ptr('0000', key),

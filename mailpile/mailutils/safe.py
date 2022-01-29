@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import email
 import email.errors
 import email.message
@@ -6,7 +6,7 @@ import random
 import re
 import rfc822
 import time
-from urllib import quote, unquote
+from urllib.parse import quote, unquote
 
 from mailpile.i18n import gettext as _
 from mailpile.i18n import ngettext as _n
@@ -62,7 +62,7 @@ def safe_decode_hdr(msg=None, name=None, hdr=None, charset=None):
         value = hdr
         charset = charset or 'utf-8'
 
-    if not isinstance(value, unicode):
+    if not isinstance(value, str):
         # Already a str! Oh shit, might be nasty binary data.
         value = try_decode(value, charset, replace='?')
 
@@ -87,7 +87,7 @@ def safe_parse_date(date_hdr):
     try:
         if ';' in date_hdr:
             date_hdr = date_hdr.split(';')[-1].strip()
-        msg_ts = long(rfc822.mktime_tz(rfc822.parsedate_tz(date_hdr)))
+        msg_ts = int(rfc822.mktime_tz(rfc822.parsedate_tz(date_hdr)))
         if (msg_ts > (time.time() + 24 * 3600)) or (msg_ts < 1):
             return None
         else:

@@ -45,20 +45,20 @@ class TestUI(MailPileUnittest):
                 self.mp._ui.log(UserInteraction.LOG_PROGRESS, "progress")
                 self.mp._ui.log(UserInteraction.LOG_DEBUG, "debug")
                 self.mp._ui.log(UserInteraction.LOG_ALL, "all")
-            self.assertEquals(out, ['', ''])
+            self.assertEqual(out, ['', ''])
             with capture() as out:
                 self.mp._ui.unblock()
-            self.assertEquals(len(out), 2)
-            self.assertEquals(out[0], '')
+            self.assertEqual(len(out), 2)
+            self.assertEqual(out[0], '')
             # Check stripped output
             output = [x.strip() for x in out[1].split('\r')]
-            self.assertEquals(output, ['urgent', 'result', 'error',
+            self.assertEqual(output, ['urgent', 'result', 'error',
                                        'notify', 'warning', 'progress',
                                        'debug', 'all', ''])
             # Progress has \r in the end instead of \n
             progress_str = [x for x in out[1].split('\r\n')
                             if 'progress' in x][0].strip()
-            self.assertEquals(progress_str,
+            self.assertEqual(progress_str,
                               ''.join(['progress', ' ' * 71, '\rdebug']))
         finally:
             self.mp._ui = old_ui
@@ -78,7 +78,7 @@ class TestUI(MailPileUnittest):
                 self.mp._ui.log(UserInteraction.LOG_ALL, "all")
                 self.mp._ui.clear_log()
                 self.mp._ui.unblock()
-            self.assertEquals(out, ['', ''])
+            self.assertEqual(out, ['', ''])
         finally:
             self.mp._ui = old_ui
 

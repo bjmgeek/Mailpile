@@ -67,57 +67,51 @@ class TestCommands(MailPileUnittest):
     def test_crypto_policy_action(self):
         res = self.mp.crypto_policy("foobar")
         self.assertEqual(res.as_dict()["message"],
-            u'The encryption policy for these recipients is: best-effort')
+            'The encryption policy for these recipients is: best-effort')
         self.assertEqual(res.as_dict()["result"]['crypto-policy'],
                          'best-effort')
 
     def test_reply_no_subject(self):
-        mid = self.mp.search('from:ohcheeou').result['data']['metadata']\
-                                             .values()[0]['mid']
+        mid = list(self.mp.search('from:ohcheeou').result['data']['metadata'].values())[0]['mid']
         # Just checks it does not crash
         res = self.mp.reply('ephemeral', '=%s' % mid)
         self.assertEqual(res.status, 'success')
-        self.assertEqual(res.result['data']['metadata'].values()[0]['subject'],
+        self.assertEqual(list(res.result['data']['metadata'].values())[0]['subject'],
                          'Re:')
 
     def test_reply_subjects_on_first_msg(self):
         # Subject: Verb. Target. Outcome.'
-        mid = self.mp.search('subject:Verb').result['data']['metadata']\
-                                            .values()[0]['mid']
+        mid = list(self.mp.search('subject:Verb').result['data']['metadata'].values())[0]['mid']
         res = self.mp.reply('ephemeral', '=%s' % mid)
-        self.assertEqual(res.result['data']['metadata'].values()[0]['subject'],
+        self.assertEqual(list(res.result['data']['metadata'].values())[0]['subject'],
                          'Re: Verb. Target. Outcome.')
 
     def test_reply_subject_on_reply_msg(self):
         # Subject: Re: Here's $1
-        mid = self.mp.search('subject:Here').result['data']['metadata']\
-                                            .values()[0]['mid']
+        mid = list(self.mp.search('subject:Here').result['data']['metadata'].values())[0]['mid']
         res = self.mp.reply('ephemeral', '=%s' % mid)
-        self.assertEqual(res.result['data']['metadata'].values()[0]['subject'],
+        self.assertEqual(list(res.result['data']['metadata'].values())[0]['subject'],
                          "Re: Here's $1")
 
     def test_reply_subject_on_fw_msg(self):
         # Subject: Fw: About shrubberies
-        mid = self.mp.search('shrubberies').result['data']['metadata']\
-                                           .values()[0]['mid']
+        mid = list(self.mp.search('shrubberies').result['data']['metadata'].values())[0]['mid']
         res = self.mp.reply('ephemeral', '=%s' % mid)
-        self.assertEqual(res.result['data']['metadata'].values()[0]['subject'],
+        self.assertEqual(list(res.result['data']['metadata'].values())[0]['subject'],
                          "Re: Fw: About shrubberies")
 
     def test_fwd_subject_on_re_msg(self):
         # Subject: Re: Here's $1
-        mid = self.mp.search('subject:Here').result['data']['metadata']\
-                                            .values()[0]['mid']
+        mid = list(self.mp.search('subject:Here').result['data']['metadata'].values())[0]['mid']
         res = self.mp.forward('ephemeral', '=%s' % mid)
-        self.assertEqual(res.result['data']['metadata'].values()[0]['subject'],
+        self.assertEqual(list(res.result['data']['metadata'].values())[0]['subject'],
                          "Fwd: Re: Here's $1")
 
     def test_fw_subject_on_fw_msg(self):
         # Subject: Fw: A question shrubberies
-        mid = self.mp.search('shrubberies').result['data']['metadata']\
-                                           .values()[0]['mid']
+        mid = list(self.mp.search('shrubberies').result['data']['metadata'].values())[0]['mid']
         res = self.mp.forward('ephemeral', '=%s' % mid)
-        self.assertEqual(res.result['data']['metadata'].values()[0]['subject'],
+        self.assertEqual(list(res.result['data']['metadata'].values())[0]['subject'],
                          "Fw: About shrubberies")
 
 
@@ -132,9 +126,9 @@ class TestCommandResult(MailPileUnittest):
 
     def test_command_result_as_text_for_boolean_result(self):
         res = self.mp.rescan()
-        self.assertEquals(res.result['messages'], 0)
-        self.assertEquals(res.result['mailboxes'], 0)
-        self.assertEquals(res.result['vcards'], 0)
+        self.assertEqual(res.result['messages'], 0)
+        self.assertEqual(res.result['mailboxes'], 0)
+        self.assertEqual(res.result['vcards'], 0)
 
     def test_command_result_non_zero(self):
         res = self.mp.help_splash()

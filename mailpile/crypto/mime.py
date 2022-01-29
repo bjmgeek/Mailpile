@@ -1,10 +1,10 @@
-from __future__ import print_function
+
 # These are methods to do with MIME and crypto, implementing PGP/MIME.
 
 import math
 import random
 import re
-import StringIO
+import io
 import email.parser
 
 from email import encoders
@@ -37,7 +37,7 @@ def Normalize(payload):
 
 
 def MessageAsString(part, unixfrom=False):
-    buf = StringIO.StringIO()
+    buf = io.StringIO()
     Generator(buf).flatten(part, unixfrom=unixfrom)
     return Normalize(buf.getvalue()).replace('--\r\n--', '--\r\n\r\n--')
 
@@ -120,7 +120,7 @@ def MimeReplacePart(part, newpart, keep_old_headers=False):
     part.set_payload(newpart.get_payload())
 
     # Original MIME headers must go, whether we're replacing them or not.
-    for hdr in [k for k in part.keys() if k.lower().startswith('content-')]:
+    for hdr in [k for k in list(part.keys()) if k.lower().startswith('content-')]:
         while hdr in part:
             del part[hdr]
 
@@ -129,19 +129,19 @@ def MimeReplacePart(part, newpart, keep_old_headers=False):
     if keep_old_headers:
         if not isinstance(keep_old_headers, str):
             keep_old_headers = "Old"
-        for h in newpart.keys():
+        for h in list(newpart.keys()):
             headers = (part.get_all(h) or [])
             if (len(headers) == 1) and (part[h] == newpart[h]):
                 continue
             for v in headers:
                 part.add_header('X-%s-%s' % (keep_old_headers, h), v)
 
-    for h in newpart.keys():
+    for h in list(newpart.keys()):
         while h in part:
             del part[h]
 
     copied = set([])
-    for h, v in newpart.items():
+    for h, v in list(newpart.items()):
         part.add_header(h, v)
         if not h.lower().startswith('content-'):
             copied.add(h)
@@ -252,7 +252,7 @@ def UnwrapMimeCrypto(part, protocols=None, psi=None, pei=None, charsets=None,
                     # everyone else (same algo as enigmail).
                     data = email.parser.Parser().parsestr(
                         pl[0].get_payload(), headersonly=True)
-                    for h in data.keys():
+                    for h in list(data.keys()):
                         while h in part:
                             del part[h]
                         part[h] = data[h]
@@ -396,7 +396,7 @@ def UnwrapPlainTextCrypto(part, protocols=None, psi=None, pei=None,
     payload = part.get_payload(None, True).strip()
     si = SignatureInfo(parent=psi)
     ei = EncryptionInfo(parent=pei)
-    for crypto_cls in protocols.values():
+    for crypto_cls in list(protocols.values()):
         crypto = crypto_cls()
 
         if (payload.startswith(crypto.ARMOR_BEGIN_ENCRYPTED) and
@@ -606,7 +606,7 @@ class MimeWrapper:
 
         obscured_set = set([])
         to_delete = {}
-        for (h, header_value) in msg.items():
+        for (h, header_value) in list(msg.items()):
             if not header_value:
                 continue
 
@@ -661,7 +661,7 @@ class MimeWrapper:
         #       cleaner (on msg) to have run first.
         display_headers = []
         to_delete = {}
-        for h, v in msg.items():
+        for h, v in list(msg.items()):
             hl = h.lower()
             if not hl.startswith('content-') and not hl.startswith('mime-'):
                 container.add_header(h, v)

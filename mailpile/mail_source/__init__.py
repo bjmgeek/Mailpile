@@ -2,7 +2,7 @@ import datetime
 import os
 import random
 import re
-import thread
+import _thread
 import threading
 import traceback
 import time
@@ -56,7 +56,7 @@ class BaseMailSource(threading.Thread):
             return self.listdir_(*args, **kwargs)
 
         def listdir_(self, where, **kwargs):
-            return [m for m in self.source.my_config.mailbox.keys()]
+            return [m for m in list(self.source.my_config.mailbox.keys())]
 
         def open_(self, fp, *args, **kwargs):
             raise IOError('Cannot open Mail Source entries (yet)')
@@ -228,7 +228,7 @@ class BaseMailSource(threading.Thread):
         return md5_hex(str(self._loop_count), m.name)
 
     def _sorted_mailboxes(self):
-        mailboxes = self.my_config.mailbox.values()
+        mailboxes = list(self.my_config.mailbox.values())
         mailboxes.sort(key=lambda m: (
             'inbox' in m.name.lower() and 1 or 2,
             'sent' in m.name.lower() and 1 or 2,
@@ -421,12 +421,12 @@ class BaseMailSource(threading.Thread):
     def _existing_mailboxes(self):
         return set(self.session.config.sys.mailbox +
                    [mbx_cfg.local
-                    for mbx_cfg in self.my_config.mailbox.values()
+                    for mbx_cfg in list(self.my_config.mailbox.values())
                     if mbx_cfg.local])
 
     def _update_unknown_state(self):
         have_unknown = 0
-        for mailbox in self.my_config.mailbox.values():
+        for mailbox in list(self.my_config.mailbox.values()):
             if mailbox.policy == 'unknown':
                 have_unknown += 1
         self.event.data['counters']['unknown_policies'] = have_unknown
@@ -479,7 +479,7 @@ class BaseMailSource(threading.Thread):
             max_mailboxes = self.my_config.discovery.max_mailboxes
             max_mailboxes -= len(self.my_config.mailbox)
             adding = []
-            paths = [(p.encode('utf-8') if isinstance(p, unicode) else p)
+            paths = [(p.encode('utf-8') if isinstance(p, str) else p)
                      for p in (paths or self.my_config.discovery.paths)]
             paths.sort()
             while paths:
@@ -546,7 +546,7 @@ class BaseMailSource(threading.Thread):
                 new = {}
                 for path in adding:
                     new[config.sys.mailbox.append(path)] = path
-                for mailbox_idx in new.keys():
+                for mailbox_idx in list(new.keys()):
                     mbx_cfg = self.take_over_mailbox(mailbox_idx, save=False)
                     if self._policy(mbx_cfg) != 'unknown':
                         del new[mailbox_idx]
@@ -645,7 +645,7 @@ class BaseMailSource(threading.Thread):
                 if len(name) < 4:
                     name = _('Mail: %s') % name
                 disco_cfg.parent_tag = name
-            if disco_cfg.parent_tag not in self.session.config.tags.keys():
+            if disco_cfg.parent_tag not in list(self.session.config.tags.keys()):
                 from mailpile.plugins.tags import Slugify
                 disco_cfg.parent_tag = self._create_tag(
                     disco_cfg.parent_tag,
@@ -856,7 +856,7 @@ class BaseMailSource(threading.Thread):
             gone = []
             src_keys = set(src.keys())
             loc_keys = set(loc.keys())
-            for key, val in loc.source_map.iteritems():
+            for key, val in loc.source_map.items():
                 if (val not in loc_keys) or (key not in src_keys):
                     gone.append(key)
             for key in gone:
@@ -937,7 +937,7 @@ class BaseMailSource(threading.Thread):
                 return -1
             self._rescanning = True
 
-        mailboxes = min(1, len([m for m in self.my_config.mailbox.values()
+        mailboxes = min(1, len([m for m in list(self.my_config.mailbox.values())
                                 if self._policy(m) not in ('ignore',
                                                            'unknown')]))
         try:
@@ -1083,7 +1083,7 @@ class BaseMailSource(threading.Thread):
             for b, e, s in waiters:
                 try:
                     b.release()
-                except thread.error:
+                except _thread.error:
                     pass
                 if s:
                     self.session = s
@@ -1110,7 +1110,7 @@ class BaseMailSource(threading.Thread):
                 for b, e, s in waiters:
                     try:
                         e.release()
-                    except thread.error:
+                    except _thread.error:
                         pass
                 self.session = _original_session
             self._update_unknown_state()
@@ -1170,7 +1170,7 @@ class BaseMailSource(threading.Thread):
             for l in (begin, end):
                 try:
                     l.release()
-                except thread.error:
+                except _thread.error:
                     pass
 
     def quit(self, join=False):

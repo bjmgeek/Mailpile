@@ -216,7 +216,7 @@ class Build(object):
         Create an argument parser for this build
         '''
         parser = parser or argparse.ArgumentParser()
-        for keyword, func in self._defaults.items():
+        for keyword, func in list(self._defaults.items()):
             help_str = repr(func(keyword))
             if func.__doc__:
                 desc = func.__doc__.strip()
@@ -227,7 +227,7 @@ class Build(object):
             parser.add_argument('--config_' + keyword.replace('-', '_'),
                                 help=help_str)
 
-        for keyword, desc in self._options.items():                   
+        for keyword, desc in list(self._options.items()):                   
             parser.add_argument('--config_' + keyword.replace('-', '_'),
                                 help=desc)
         return parser
@@ -237,7 +237,7 @@ class Build(object):
         create a context from argv
         '''
         config = {}
-        for key in itertools.chain(self._defaults.keys(), self._options.keys()):
+        for key in itertools.chain(list(self._defaults.keys()), list(self._options.keys())):
             test = 'config_' + key.replace('-', '_')
             value = getattr(args, test)
             if value is not None:

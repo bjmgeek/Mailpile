@@ -3,7 +3,7 @@ import datetime
 import hashlib
 import random
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import json
 import shlex
 import time
@@ -245,8 +245,8 @@ class MailpileCommand(Extension):
                     for ak, av in elem.get('url_args_add', []):
                         if ak == key and av not in values:
                             values.append(av)
-                args.extend([(key, unicode(v).encode("utf-8")) for v in values])
-            return url + '?' + urllib.urlencode(args) + frag
+                args.extend([(key, str(v).encode("utf-8")) for v in values])
+            return url + '?' + urllib.parse.urlencode(args) + frag
         else:
             return url + frag
 
@@ -258,7 +258,7 @@ class MailpileCommand(Extension):
                 setups.append('$("%s").each(function(){%s(this);});'
                               % (classfmt % elem, elem['javascript_setup']))
             if elem.get('javascript_events'):
-                for event, call in elem.get('javascript_events').iteritems():
+                for event, call in elem.get('javascript_events').items():
                     setups.append('$("%s").bind("%s", %s);' %
                         (classfmt % elem, event, call))
         return Markup("function(){%s}" % ''.join(setups))
@@ -755,7 +755,7 @@ class MailpileCommand(Extension):
                 for i in range(0, len(sequence))]
 
     def _url_path_fix(self, *urlparts):
-        url = ''.join([unicode(p) for p in urlparts])
+        url = ''.join([str(p) for p in urlparts])
         if url[:1] in ('/', ):
             http_path = self.env.session.config.sys.http_path or ''
             if not url.startswith(http_path+'/'):
@@ -765,7 +765,7 @@ class MailpileCommand(Extension):
     def _urlencode(self, s):
         if type(s) == 'Markup':
             s = s.unescape()
-        return Markup(urllib.quote_plus(unicode(s).encode('utf-8')))
+        return Markup(urllib.parse.quote_plus(str(s).encode('utf-8')))
 
     def _selectattr(self, seq, attr, value=None):
         if value is None:
@@ -1069,7 +1069,7 @@ class MailpileCommand(Extension):
         return output
 
     def _show_nagification(self, nag):
-        now = long((time.time() + 0.5) * 1000)
+        now = int((time.time() + 0.5) * 1000)
         if now > nag and nag != -1:
             return True
         return False

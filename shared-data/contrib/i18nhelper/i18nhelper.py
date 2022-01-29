@@ -14,10 +14,10 @@ class I18NRecent(Command):
     class CommandResult(Command.CommandResult):
         def as_text(self):
             if self.result:
-                return '\n'.join(["%s: %s" % (key, value) for key, value in self.result.iteritems()])
+                return '\n'.join(["%s: %s" % (key, value) for key, value in self.result.items()])
             else:
                 return _("Nothing recently translated")
 
     def command(self):
-        return dict(map(lambda x: (x, _(x)), RECENTLY_TRANSLATED))
+        return dict([(x, _(x)) for x in RECENTLY_TRANSLATED])
 

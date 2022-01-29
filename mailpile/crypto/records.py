@@ -113,8 +113,8 @@ Detailed search keyword stats:
           (sample size: ~300k emails)
 
 """
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import binascii
 import hashlib
 import os
@@ -147,7 +147,7 @@ class _SimpleList(object):
         return (self[v] for v in range(0, len(self)))
 
     def __reversed__(self):
-        return (self[v] for v in reversed(range(0, len(self))))
+        return (self[v] for v in reversed(list(range(0, len(self)))))
 
 
 class EncryptedRecordStore(_SimpleList):
@@ -225,7 +225,7 @@ class EncryptedRecordStore(_SimpleList):
                            for hl in header.splitlines())
 
             self._header_skip = len(header) + len(self._NEWLINE) * 2
-            self._iv_seed = long(headers['iv-seed'], 16) + 10240020
+            self._iv_seed = int(headers['iv-seed'], 16) + 10240020
             self._max_bytes = int(headers['record-size']) - (7 + 16) - 1
             self._header_data = {
                 'record_size': int(headers['record-size']),
@@ -584,7 +584,7 @@ class EncryptedDict(object):
 
     def _digest(self, key):
         digest = hashlib.sha256(self._key)
-        if isinstance(key, unicode):
+        if isinstance(key, str):
             key = key.encode('utf-8')
         elif not isinstance(key, str):
             key = str(key)
@@ -784,13 +784,13 @@ class EncryptedIntDict(EncryptedDict):
                     pass
 
     def save_record(self, key, value):
-        value = (struct.pack(self.DATA_FORMAT, long(value))
+        value = (struct.pack(self.DATA_FORMAT, int(value))
                  + key.encode('utf-8'))
         return EncryptedDict.save_record(self, key, value)
 
     def rdata_value(self, rdata):
         value = EncryptedDict.rdata_value(self, rdata)
-        return long(struct.unpack(self.DATA_FORMAT, value[:self.DATA_BYTES]
+        return int(struct.unpack(self.DATA_FORMAT, value[:self.DATA_BYTES]
                                   )[0])
 
 
@@ -816,7 +816,7 @@ if __name__ == '__main__':
                                 max_bytes=size, overwrite=True)
         print('Testing max_size=%d, real max=%d, lines=%d'
               % (size, er.s0._MAX_DATA_SIZE, er.s0._RECORD_LINES))
-        for l in reversed(range(0, 20)):
+        for l in reversed(list(range(0, 20))):
             er[l] = 'bjarni %s' % l
         for l in range(0, 20):
             assert(er[l] == 'bjarni %s' % l)

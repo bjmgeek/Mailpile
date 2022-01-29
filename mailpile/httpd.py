@@ -2,8 +2,8 @@
 # Mailpile's built-in HTTPD
 #
 ###############################################################################
-import Cookie
-import cStringIO
+import http.cookies
+import io
 import hashlib
 import gzip
 import mimetypes
@@ -11,13 +11,13 @@ import os
 import random
 import select
 import socket
-import SocketServer
+import socketserver
 import time
 import threading
 import traceback
-from SimpleXMLRPCServer import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
-from urllib import quote, unquote
-from urlparse import parse_qs, urlparse
+from xmlrpc.server import SimpleXMLRPCServer, SimpleXMLRPCRequestHandler
+from urllib.parse import quote, unquote
+from urllib.parse import parse_qs, urlparse
 
 import mailpile.util
 import mailpile.security as security
@@ -105,12 +105,12 @@ class HttpRequestHandler(SimpleXMLRPCRequestHandler):
 
     def _load_cookies(self):
         """Robustified cookie parser that silently drops invalid cookies."""
-        cookies = Cookie.SimpleCookie()
+        cookies = http.cookies.SimpleCookie()
         for fragment in self.headers.get('cookie', '').split('; '):
             if fragment:
                 try:
                     cookies.load(fragment)
-                except Cookie.CookieError:
+                except http.cookies.CookieError:
                     pass
         return cookies
 
@@ -186,7 +186,7 @@ class HttpRequestHandler(SimpleXMLRPCRequestHandler):
             self.send_header(header[0], header[1])
         session_id = self.session.ui.html_variables.get('http_session')
         if session_id:
-            cookies = Cookie.SimpleCookie()
+            cookies = http.cookies.SimpleCookie()
             cookies[self.server.session_cookie] = session_id
             cookies[self.server.session_cookie]['path'] = '/'
             cookies[self.server.session_cookie]['max-age'] = 24 * 3600
@@ -211,7 +211,7 @@ class HttpRequestHandler(SimpleXMLRPCRequestHandler):
         suppress_body -- Set this to True to ignore the message parameter
                               and not send any response body
         """
-        message = unicode(message).encode('utf-8')
+        message = str(message).encode('utf-8')
         self.log_request(code, message and len(message) or '-')
         # Send HTTP/1.1 header
         self.send_http_response(code, msg)
@@ -250,7 +250,7 @@ class HttpRequestHandler(SimpleXMLRPCRequestHandler):
                                   '\x1f\x8b', 'BZ', 'PK' # GZIP, BZIP, PKZIP
                                   )) and
                 ('gzip' in self.headers.get('accept-encoding', ''))):
-            gzipped = cStringIO.StringIO()
+            gzipped = io.StringIO()
             with gzip.GzipFile(fileobj=gzipped, mode='w') as fd:
                 fd.write(data)
             gzipped = gzipped.getvalue()
@@ -537,7 +537,7 @@ class HttpRequestHandler(SimpleXMLRPCRequestHandler):
                                           ' ' + (fmt % args))
 
 
-class HttpServer(SocketServer.ThreadingMixIn, SimpleXMLRPCServer):
+class HttpServer(socketserver.ThreadingMixIn, SimpleXMLRPCServer):
     def __init__(self, session, sspec, handler):
         SimpleXMLRPCServer.__init__(self, sspec[:2], handler)
         self.daemon_threads = True
@@ -580,7 +580,7 @@ class HttpServer(SocketServer.ThreadingMixIn, SimpleXMLRPCServer):
             while not (self.__shutdown_request or mailpile.util.QUITTING):
                 # FIXME: Let's add a global FD to interrupt this, so we can
                 #        be more responsive AND lengthen our timeouts.
-                r, w, e = SocketServer._eintr_retry(
+                r, w, e = socketserver._eintr_retry(
                     select.select, [self], [], [], poll_interval)
                 if self in r:
                     self._handle_request_noblock()

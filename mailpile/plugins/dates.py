@@ -65,7 +65,7 @@ def search(config, idx, term, hits):
             do = _date_offsets[end[-1:]]
             end = _mk_date(time.time() - int(end[:-1])*do*24*3600)
         elif len(end) >= 9 and '-' not in end:
-            end = _mk_date(long(end))
+            end = _mk_date(int(end))
 
         if start in _date_offsets:
             start = _mk_date(time.time() - _date_offsets[start]*24*3600)
@@ -73,7 +73,7 @@ def search(config, idx, term, hits):
             do = _date_offsets[start[-1:]]
             start = _mk_date(time.time() - int(start[:-1])*do*24*3600)
         elif len(start) >= 9 and '-' not in start:
-            start = _mk_date(long(start))
+            start = _mk_date(int(start))
 
         start = [int(p) for p in start.split('-')][:3]
         end = [int(p) for p in end.split('-')[:3]]

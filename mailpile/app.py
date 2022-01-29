@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import getopt
 import gettext
 import locale
@@ -42,7 +42,7 @@ def threaded_raw_input(prompt):
     """These shenigans are necessary to let Quit work reliably."""
     def reader(container):
         try:
-            line = raw_input(prompt).decode('utf-8').strip()
+            line = input(prompt).decode('utf-8').strip()
             container.append(line)
         except EOFError:
             pass
@@ -164,7 +164,7 @@ def Interact(session):
                     session.ui.block()
                     session.ui.display_result(result)
                 except UsageError as e:
-                    session.fatal_error(unicode(e))
+                    session.fatal_error(str(e))
                 except UrlRedirectException as e:
                     session.fatal_error('Tried to redirect to: %s' % e.url)
                 if old_render_mode is not None:
@@ -307,7 +307,7 @@ fail in unexpected ways. If it breaks you get to keep both pieces!
                         session, args[0], ' '.join(args[1:]).decode('utf-8')))
 
         except (getopt.GetoptError, UsageError) as e:
-            session.fatal_error(unicode(e))
+            session.fatal_error(str(e))
 
         if (not allopts) and (not a1) and (not a2):
             InteractCommand(session).run()

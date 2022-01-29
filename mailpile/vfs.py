@@ -57,10 +57,10 @@ class FilePath(object):
             if isinstance(cooked_fp, FilePath):
                 self.raw_fp = cooked_fp.raw_fp
                 flags = cooked_fp.flags if (flags is None) else flags
-            elif (isinstance(cooked_fp, (str, unicode)) and
+            elif (isinstance(cooked_fp, str) and
                     cooked_fp[-2:] == '=!'):
                 self.raw_fp = self.unalias(cooked_fp[:-2].decode('base64'))
-            elif isinstance(cooked_fp, unicode):
+            elif isinstance(cooked_fp, str):
                 self.raw_fp = self.unalias(cooked_fp.encode('utf-8'))
             else:
                 self.raw_fp = self.unalias(str(cooked_fp))
@@ -81,7 +81,7 @@ class FilePath(object):
         while fp[:2] == './':
             fp = fp[2:]
         alias, prefix = None, ''
-        for a, p in VFS_ALIASES.iteritems():
+        for a, p in VFS_ALIASES.items():
             if len(p) > len(prefix) and fp.startswith(p):
                 alias, prefix = a, p
         if alias:
@@ -98,10 +98,10 @@ class FilePath(object):
 
     def __str__(self):
         """Render file path as a cooked string"""
-        return unicode(self).encode('utf-8')
+        return str(self).encode('utf-8')
 
     def __eq__(self, other):
-        return unicode(self) == unicode(other)
+        return str(self) == str(other)
 
     def encoded(self):
         return self.alias(self.raw_fp).encode('base64').strip() + '=!'
@@ -168,7 +168,7 @@ class MailpileVfsBase(object):
         for f, m, args in (('flags', cls.getflags, (fp, config)),
                            ('bytes', cls.getsize, (fp,)),
                            ('display_name', cls.display_name, (ap, config)),
-                           ('display_path', unicode, (ap,)),
+                           ('display_path', str, (ap,)),
                            ('encoded', ap.encoded, [])):
             try:
                 info[f] = m(*args)
@@ -364,7 +364,7 @@ class MailpileVfsRoot(MailpileVfsBase):
 
     def _entries(self):
         e = copy.copy(self.entries)
-        for msid, msobj in self.config.mail_sources.iteritems():
+        for msid, msobj in self.config.mail_sources.items():
             if msobj and msobj.my_config and msobj.my_config.enabled:
                 e['msrc.%s' % msid] = (
                     FilePath('/src:%s' % msid), msobj.name, 'MailSource')
@@ -378,11 +378,11 @@ class MailpileVfsRoot(MailpileVfsBase):
         return self.listdir_()
 
     def listdir_(self, fp, *args, **kwargs):
-        return self._entries().keys() if (fp == '/') else []
+        return list(self._entries().keys()) if (fp == '/') else []
 
     def display_name_(self, fp, config):
         try:
-            return unicode(self._entries()[fp[1:]][1])
+            return str(self._entries()[fp[1:]][1])
         except KeyError:
             return _('Mailpile VFS')
 

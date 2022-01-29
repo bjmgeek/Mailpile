@@ -165,7 +165,7 @@ class hintsCommand(Command):
         if 'reset' in self.args:
             safe_assert(self.data.get('_method', 'POST') == 'POST')
             ts = self.timestamps()
-            for k in ts.keys():
+            for k in list(ts.keys()):
                 del ts[k]
             ts['initial'] = self._today()
 

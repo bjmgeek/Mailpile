@@ -85,7 +85,7 @@ class TerminalCommand(Command):
             return self._error('No session ID supplied')
         if sid not in SESSIONS:
             return self._error(
-                'Unknown session ID: %s' % sid, result={'sessions': SESSIONS.keys()})
+                'Unknown session ID: %s' % sid, result={'sessions': list(SESSIONS.keys())})
 
         wt_session = SESSIONS[sid]
         max_width = int(float(self.data.get('width', [79])[0]))
@@ -125,7 +125,7 @@ class TerminalCommand(Command):
         return self._success(_('Ran a command'), result={
             'result': rendered,
             'raw_result': result,
-            'sessions': SESSIONS.keys()})
+            'sessions': list(SESSIONS.keys())})
 
 
 _plugins.register_commands(

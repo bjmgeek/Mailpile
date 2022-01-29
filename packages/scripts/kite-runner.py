@@ -4,7 +4,7 @@
 kite-runner.py  - XMLRPC-based script launcher with PageKite integration.
 
 """
-from __future__ import print_function
+
 import getopt
 import json
 import os
@@ -14,7 +14,7 @@ import threading
 import time
 import traceback
 try:
-    import SimpleXMLRPCServer  # Python 2.7
+    import xmlrpc.server  # Python 2.7
 except ImportError:
     import xmlrpc.server as SimpleXMLRPCServer  # Python 3.x
 
@@ -111,16 +111,16 @@ class PagekiteThread(threading.Thread):
         self.join()
 
 
-class BuildbotXMLRPCServer(SimpleXMLRPCServer.SimpleXMLRPCServer):
+class BuildbotXMLRPCServer(xmlrpc.server.SimpleXMLRPCServer):
     def __init__(self, config, *args, **kwargs):
-        SimpleXMLRPCServer.SimpleXMLRPCServer.__init__(self, *args, **kwargs)
+        xmlrpc.server.SimpleXMLRPCServer.__init__(self, *args, **kwargs)
         self.config = config
 
 
-class BuildbotRequestHandler(SimpleXMLRPCServer.SimpleXMLRPCRequestHandler):
+class BuildbotRequestHandler(xmlrpc.server.SimpleXMLRPCRequestHandler):
     def __init__(self, request, client_address, server):
         self.rpc_paths = server.config.rpc_paths
-        SimpleXMLRPCServer.SimpleXMLRPCRequestHandler.__init__(
+        xmlrpc.server.SimpleXMLRPCRequestHandler.__init__(
             self, request, client_address, server)
 
 

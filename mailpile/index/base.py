@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import copy
 import json
 import random
@@ -176,7 +176,7 @@ class BaseIndex(MessageInfoConstants):
             if len(self.CACHE) > self.MAX_CACHE_ENTRIES:
                 try:
                     for k in random.sample(
-                            self.CACHE.keys(), self.MAX_CACHE_ENTRIES/20):
+                            list(self.CACHE.keys()), self.MAX_CACHE_ENTRIES/20):
                         del self.CACHE[k]
                 except KeyError:
                     pass

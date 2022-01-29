@@ -77,7 +77,7 @@ class Pop3MailSource(BaseMailSource):
         self.watching = -1
 
     def close(self):
-        mbx = self.my_config.mailbox.values()[0]
+        mbx = list(self.my_config.mailbox.values())[0]
         if mbx:
             pop3 = self.session.config.open_mailbox(self.session,
                                                     FormatMbxId(mbx._key),
@@ -92,7 +92,7 @@ class Pop3MailSource(BaseMailSource):
 
     def open(self):
         with self._lock:
-            mailboxes = self.my_config.mailbox.values()
+            mailboxes = list(self.my_config.mailbox.values())
             if self.watching == len(mailboxes):
                 return True
             else:

@@ -92,7 +92,7 @@ class Command(object):
                 'js': self.as_js
             }
 
-        def __nonzero__(self):
+        def __bool__(self):
             return (self.result and True or False)
 
         def as_(self, what, *args, **kwargs):
@@ -118,7 +118,7 @@ class Command(object):
                 return json.dumps(self.result, indent=4, sort_keys=True,
                     default=mailpile.util.json_helper)
             else:
-                return unicode(self.result)
+                return str(self.result)
 
         __str__ = lambda self: self.as_text()
 
@@ -147,7 +147,7 @@ class Command(object):
                 rv['state']['csrf_token'] = csrf_token
             if self.error_info:
                 rv['error'] = self.error_info
-            for ui_key in [k for k in self.command_obj.data.keys()
+            for ui_key in [k for k in list(self.command_obj.data.keys())
                            if k.startswith('ui_')]:
                 rv[ui_key] = self.command_obj.data[ui_key][0]
             ev = self.command_obj.event
@@ -159,11 +159,11 @@ class Command(object):
             result = self.result if (result is None) else result
             if (isinstance(result, (list, tuple)) and
                     (not result or isinstance(result[0], (list, tuple)))):
-                import csv, StringIO
-                output = StringIO.StringIO()
+                import csv, io
+                output = io.StringIO()
                 writer = csv.writer(output, dialect='excel')
                 for row in result:
-                    writer.writerow([unicode(r).encode('utf-8') for r in row])
+                    writer.writerow([str(r).encode('utf-8') for r in row])
                 return output.getvalue().decode('utf-8')
             else:
                 return ''
@@ -252,7 +252,7 @@ class Command(object):
         if self.COMMAND_CACHE_TTL < 1:
             return ''
         from mailpile.urlmap import UrlMap
-        args = sorted(list((sqa or self.state_as_query_args()).iteritems()))
+        args = sorted(list((sqa or self.state_as_query_args()).items()))
         args += '/%d' % self.session.ui.term.max_width
         # The replace() stuff makes these usable as CSS class IDs
         return ('%s-%s' % (UrlMap(self.session).ui_url(self),
@@ -485,15 +485,15 @@ class Command(object):
             data = '(SUPPRESSED)'
         def copy_value(v):
             try:
-                unicode(v).encode('utf-8')
-                return unicode(v)[:1024]
+                str(v).encode('utf-8')
+                return str(v)[:1024]
             except (UnicodeEncodeError, UnicodeDecodeError):
                 return '(BINARY DATA)'
         if isinstance(data, (list, tuple)):
             return [self._sloppy_copy(i, name=name) for i in data]
         elif isinstance(data, dict):
             return dict((k, self._sloppy_copy(v, name=k))
-                        for k, v in data.iteritems())
+                        for k, v in data.items())
         else:
             return copy_value(data)
 
@@ -695,17 +695,17 @@ def Action(session, opt, arg, data=None):
         lopt = opt.lower()
 
         found = None
-        for tag in config.tags.values():
+        for tag in list(config.tags.values()):
             if lopt == tag.slug.lower():
                 found = tag
                 break
         if not found:
-            for tag in config.tags.values():
+            for tag in list(config.tags.values()):
                 if lopt == tag.name.lower():
                     found = tag
                     break
         if not found:
-            for tag in config.tags.values():
+            for tag in list(config.tags.values()):
                 if lopt == _(tag.name).lower():
                     found = tag
                     break

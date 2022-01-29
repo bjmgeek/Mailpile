@@ -220,7 +220,7 @@ class CompositionCommand(AddComposeMethods(Search)):
                             if 'attachment' in self.data
                             else defaults.get('attachments', {}))
                 for att_id, att_fn in defaults.get('attachments',
-                                                   {}).iteritems():
+                                                   {}).items():
                     if att_id in att_keep:
                         fn = att_keep[att_id] or att_fn
                         up.append('Attachment-%s: %s' % (att_id, fn))
@@ -934,7 +934,7 @@ class Sendit(CompositionCommand):
             except (KeyLookupError,
                     EncryptionFailureError,
                     SignatureFailureError) as exc:
-                message = unicode(exc)
+                message = str(exc)
                 session.ui.warning(message)
                 if hasattr(exc, 'missing_keys'):
                     missing_keys.extend(exc.missing)

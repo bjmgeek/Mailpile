@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from mailpile.i18n import gettext as _
 from mailpile.i18n import ngettext as _n
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 #This script builds a DCH changelog from the git commit log
-from __future__ import print_function
+
 from subprocess import check_output, call
 from multiprocessing import Pool
 import os

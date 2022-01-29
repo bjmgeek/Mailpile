@@ -1,6 +1,6 @@
 """Lock pickle files for reading and writing."""
 
-from __future__ import print_function
+
 import sys
 import os
 from six.moves import cPickle as pickle

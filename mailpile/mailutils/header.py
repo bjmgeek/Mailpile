@@ -5,7 +5,7 @@ It includes fixes that have not been ported to py2
 https://bugs.python.org/issue1079
 
 """
-from __future__ import print_function
+
 import binascii
 import email.quoprimime
 import email.base64mime
@@ -100,7 +100,7 @@ def decode_header(header):
     collapsed = []
     last_word = last_charset = None
     for word, charset in decoded_words:
-        if isinstance(word, unicode):
+        if isinstance(word, str):
             word = bytes(word, 'raw-unicode-escape')
         if last_word is None:
             last_word = word

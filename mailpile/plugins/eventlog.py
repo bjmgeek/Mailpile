@@ -61,7 +61,7 @@ class Events(Command):
                 debuglog = True
             elif '=' in arg:
                 field, value = arg.split('=', 1)
-                filters[unicode(field)] = unicode(value)
+                filters[str(field)] = str(value)
             else:
                 try:
                     limit = int(arg)

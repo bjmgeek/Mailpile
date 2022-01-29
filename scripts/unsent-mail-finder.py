@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 
-from __future__ import print_function
+
 import json
 import sys
 
@@ -29,6 +29,6 @@ for line in sys.stdin.readlines():
   except ValueError:
     print('Unparsable: %s' % line)
 
-for eid, data in sendits.iteritems():
+for eid, data in sendits.items():
     if 'OK' not in data[5]:
         print('On %s, failed to send %s' % (data[0], data[5]['mid']))

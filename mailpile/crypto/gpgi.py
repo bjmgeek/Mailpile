@@ -1,15 +1,15 @@
 #coding:utf-8
-from __future__ import print_function
+
 import os
 import string
 import sys
 import time
 import re
-import StringIO
+import io
 import tempfile
 import threading
 import traceback
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import select
 import pgpdump
 import pgpdump.utils
@@ -265,7 +265,7 @@ class GnuPGRecordParser:
                                self.parse_none, self.parse_revocation_key,
                                self.parse_keygrip]
 
-        self.dispatch = dict(zip(self.record_types, self.record_parsers))
+        self.dispatch = dict(list(zip(self.record_types, self.record_parsers)))
 
     def parse(self, lines):
         for line in lines:
@@ -273,9 +273,8 @@ class GnuPGRecordParser:
         return self.keys
 
     def parse_line(self, line):
-        line = dict(zip(self.record_fields,
-                        map(lambda s: s.replace("\\x3a", ":"),
-                        stubborn_decode(line).strip().split(":"))))
+        line = dict(list(zip(self.record_fields,
+                        [s.replace("\\x3a", ":") for s in stubborn_decode(line).strip().split(":")])))
         r = self.dispatch.get(line["record"], self.parse_unknown)
         r(line)
 
@@ -309,7 +308,7 @@ class GnuPGRecordParser:
         return line
 
     def _clean_curdata(self):
-        for v in self.curdata.keys():
+        for v in list(self.curdata.keys()):
             if self.curdata[v] == "":
                 del self.curdata[v]
         del self.curdata["record"]
@@ -399,7 +398,7 @@ UID_PARSE_RE = "^([^\(\<]+?){0,1}( \((.+?)\)){0,1}( \<(.+?)\>){0,1}\s*$"
 
 
 def stubborn_decode(text):
-    if isinstance(text, unicode):
+    if isinstance(text, str):
         return text
     try:
         return text.decode("utf-8")
@@ -473,9 +472,9 @@ class StreamWriter(Thread):
         return '%s(%s/%s)' % (Thread.__str__(self), self.name, self.state)
 
     def writeout(self, fd, output):
-        if isinstance(output, (str, unicode, bytearray)):
+        if isinstance(output, (str, bytearray)):
             total = len(output)
-            output = StringIO.StringIO(output)
+            output = io.StringIO(output)
         else:
             total = 0
         try:
@@ -777,7 +776,7 @@ class GnuPG:
 
     def _reap_threads(self):
         for tries in (1, 2, 3):
-            for name, thr in self.threads.iteritems():
+            for name, thr in self.threads.items():
                 if thr.isAlive():
                     thr.join(timeout=15)
                     if thr.isAlive() and tries > 1:
@@ -861,7 +860,7 @@ class GnuPG:
             list_keys += ["--list-keys", fprint]
         retvals = self.run(list_keys)
         public_keys = self.parse_keylist(retvals[1]["stdout"])
-        for fprint, info in public_keys.iteritems():
+        for fprint, info in public_keys.items():
             if fprint in set(secret_keys):
                 for k in ("disabled", "revoked", "expired"):
                     secret_keys[fprint][k] = info[k]
@@ -1223,7 +1222,7 @@ class GnuPG:
     def remove_armor(self, text):
         lines = text.strip().splitlines(True)
         if lines[0].startswith(self.ARMOR_BEGIN_SIGNED):
-            for idx in reversed(range(0, len(lines))):
+            for idx in reversed(list(range(0, len(lines)))):
                 if lines[idx].startswith(self.ARMOR_BEGIN_SIGNATURE):
                     lines = lines[:idx]
                     while lines and lines[0].strip():
@@ -1380,7 +1379,7 @@ class GnuPG:
                     "fingerprint": curpub
                 }
             elif line[0] == "uid":
-                email, name, comment = parse_uid(urllib.unquote(line[1]))
+                email, name, comment = parse_uid(urllib.parse.unquote(line[1]))
                 results[curpub]["uids"].append({"name": name,
                                                 "email": email,
                                                 "comment": comment})
@@ -1439,7 +1438,7 @@ class GnuPG:
     def address_to_keys(self, address):
         res = {}
         keys = self.list_keys(selectors=[address])
-        for key, props in keys.iteritems():
+        for key, props in keys.items():
             if any([x["email"] == address for x in props["uids"]]):
                 res[key] = props
 
@@ -1524,7 +1523,7 @@ def GetKeys(gnupg, config, people):
         # Keys are missing, so we try to just search the keychain
         all_keys.update(gnupg.list_keys(selectors=missing))
         found = []
-        for key_id, key in all_keys.iteritems():
+        for key_id, key in all_keys.items():
             for uid in key.get("uids", []):
                 if uid.get("email", None) in missing:
                     missing.remove(uid["email"])
@@ -1534,7 +1533,7 @@ def GetKeys(gnupg, config, people):
                     ambig.append(uid["email"])
 
     # Next, we go make sure all those keys are really in our keychain.
-    fprints = all_keys.keys()
+    fprints = list(all_keys.keys())
     for key in keys:
         key = key.upper()
         if key.startswith('0x'):

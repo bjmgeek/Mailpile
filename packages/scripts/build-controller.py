@@ -3,13 +3,13 @@
 FIXME...
 
 """
-from __future__ import print_function
+
 import getopt
 import os
 import time
 import traceback
 try:
-    from xmlrpclib import ServerProxy  # Python 2.7
+    from xmlrpc.client import ServerProxy  # Python 2.7
 except ImportError:
     from xmlrpc.client import ServerProxy  # Python 3.x
 

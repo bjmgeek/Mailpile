@@ -9,7 +9,7 @@
 ## larger mailbox.
 
 import time
-from urllib import quote, unquote
+from urllib.parse import quote, unquote
 
 from mailpile.i18n import gettext as _
 from mailpile.i18n import ngettext as _n
@@ -90,7 +90,7 @@ def UnorderedPicklable(parent, editable=False):
             self._lock.release()
 
         def __unicode__(self):
-            return unicode(str(self))
+            return str(str(self))
 
         def describe_msg_by_ptr(self, msg_ptr):
             try:
@@ -99,7 +99,7 @@ def UnorderedPicklable(parent, editable=False):
                 return _("message not found in mailbox")
 
         def _describe_msg_by_ptr(self, msg_ptr):
-            return unicode(msg_ptr)
+            return str(msg_ptr)
 
         def __setstate__(self, data):
             self.__dict__.update(data)

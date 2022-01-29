@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import os
 import sys
 import random
@@ -152,7 +152,7 @@ class PostingListContainer(object):
             # Optimizing for fast loads, so deletion only happens on save.
             output = '\n'.join('\t'.join(l) for l
                                in ([sig] + [str(v) for v in vals]
-                                   for sig, vals in self.words.iteritems())
+                                   for sig, vals in self.words.items())
                                if len(l) > 1)
             t.append(time.time())
 
@@ -186,7 +186,7 @@ class PostingListContainer(object):
         splits = [self]
         if len(self.sig) < self.MAX_HASH_LEN:
             total, sums = 0, {}
-            for sig, values in self.words.iteritems():
+            for sig, values in self.words.items():
                 total += len(values)
                 if len(values) >= (self.MAX_ITEMS / 2):
                     nsig = sig[:self.MAX_HASH_LEN]
@@ -198,7 +198,7 @@ class PostingListContainer(object):
                     sums[nsig] = len(values)
 
             while total > self.MAX_ITEMS and sums:
-                skeys = sums.keys()
+                skeys = list(sums.keys())
                 skeys.sort(key=lambda k: -sums[k])
                 nsig = skeys[0]
                 total -= sums[nsig]
@@ -459,8 +459,8 @@ class OldPostingList(object):
 
     def _fmt_file(self, prefix):
         output = []
-        self.session.ui.mark('Formatting prefix %s' % unicode(prefix))
-        for word in self.WORDS.keys():
+        self.session.ui.mark('Formatting prefix %s' % str(prefix))
+        for word in list(self.WORDS.keys()):
             data = self.WORDS.get(word, [])
             if ((prefix == 'ALL' or word.startswith(prefix))
                     and len(data) > 0):
@@ -628,7 +628,7 @@ class GlobalPostingList(OldPostingList):
         global GLOBAL_GPL
         try:
             max_idx = 0
-            for hits in GLOBAL_GPL.values():
+            for hits in list(GLOBAL_GPL.values()):
                 if hits:
                     max_idx = max(max_idx, max(int(id, 36) for id in hits))
             return max_idx

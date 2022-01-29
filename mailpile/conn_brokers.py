@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 # Connection brokers facilitate & manage incoming and outgoing connections.
 #
 # The idea is that code actually tells us what it wants to do, so we can
@@ -385,7 +385,7 @@ class TcpConnectionBroker(BaseConnectionBroker):
             raise CapabilityFailure('Cannot connect to .onion addresses')
 
     def _conn(self, address, *args, **kwargs):
-        clean_kwargs = dict((k, v) for k, v in kwargs.iteritems()
+        clean_kwargs = dict((k, v) for k, v in kwargs.items()
                             if not k.startswith('_'))
         return original_scc(address, *args, **clean_kwargs)
 
@@ -702,7 +702,7 @@ class MasterBroker(BaseConnectionBroker):
                 et, v, t = sys.exc_info()
         if et is not None:
             context.error = '%s' % v
-            raise et, v, t
+            raise et(v).with_traceback(t)
 
         context.error = _('No connection method found')
         raise CapabilityFailure(context.error)
@@ -763,7 +763,7 @@ class GetTlsCertificate(Command):
             if self.result:
                 def fmt(h, r):
                     return '%s:\t%s' % (h, r[-1] or r[1])
-                return '\n'.join(fmt(h, r) for h, r in self.result.iteritems())
+                return '\n'.join(fmt(h, r) for h, r in self.result.items())
             return _('No certificates found')
 
     def command(self):
@@ -944,11 +944,11 @@ class GetTlsCertificate(Command):
 
                 cfg_key = md5_hex('%s:%d' % addr)
                 if tofu_clear:
-                    if cfg_key in config.tls.keys():
+                    if cfg_key in list(config.tls.keys()):
                         del config.tls[cfg_key]
                         changes += 1
                 if tofu_save:
-                    if cfg_key not in config.tls.keys():
+                    if cfg_key not in list(config.tls.keys()):
                         config.tls[cfg_key] = {'server': '%s:%d' % addr}
                     cert_tofu = config.tls[cfg_key]
                     cert_tofu.use_web_ca = False
@@ -974,7 +974,7 @@ class GetTlsCertificate(Command):
                 ok += 1
             except Exception as e:
                 certs[host] = (
-                    False, _('Failed to fetch certificate'), unicode(e),
+                    False, _('Failed to fetch certificate'), str(e),
                     traceback.format_exc())
 
         if changes:

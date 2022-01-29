@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 APPVER = "1.0.0rc6"
 ABOUT = """\
 Mailpile.py              a tool             Copyright 2013-2018, Mailpile ehf

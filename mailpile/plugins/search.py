@@ -52,7 +52,7 @@ class SearchResults(dict):
             for sender in senders:
                 sname = self._name(sender)
                 names[sname] = names.get(sname, 0) + 1
-            namelist = names.keys()
+            namelist = list(names.keys())
             namelist.sort(key=lambda n: -names[n])
             return ', '.join(namelist)
         if len(senders) < 1:
@@ -96,7 +96,7 @@ class SearchResults(dict):
                 return cache['metadata']
 
         nz = lambda l: [v for v in l if v]
-        msg_ts = long(msg_info[MailIndex.MSG_DATE], 36)
+        msg_ts = int(msg_info[MailIndex.MSG_DATE], 36)
         msg_date = datetime.datetime.fromtimestamp(msg_ts)
 
         fe, fn = ExtractEmailAndName(msg_info[MailIndex.MSG_FROM])
@@ -218,17 +218,17 @@ class SearchResults(dict):
     def _tag(self, tid, attributes={}):
         return dict_merge(self.session.config.get_tag_info(tid), attributes)
 
-    _BAR = u'\u2502'
-    _FORK = u'\u251c'
-    _FIRST = u'\u250c'
-    _LAST = u'\u2514'
-    _BLANK = u' '
-    _DASH = u'\u2500'
-    _TEE = u'\u252c'
+    _BAR = '\u2502'
+    _FORK = '\u251c'
+    _FIRST = '\u250c'
+    _LAST = '\u2514'
+    _BLANK = ' '
+    _DASH = '\u2500'
+    _TEE = '\u252c'
 
     def _thread(self, thread_mid):
         thr_info = self.idx.get_conversation(msg_idx=int(thread_mid, 36))
-        thr_info.sort(key=lambda i: long(i[self.idx.MSG_DATE], 36))
+        thr_info.sort(key=lambda i: int(i[self.idx.MSG_DATE], 36))
         if not thr_info:
             return []
 
@@ -241,7 +241,7 @@ class SearchResults(dict):
         # Reverse the mapping
         thr_map = {}
         first_mid = thr_info[0][self.idx.MSG_MID]
-        for msg_mid, (par_mid, m_info) in par_map.iteritems():
+        for msg_mid, (par_mid, m_info) in par_map.items():
             if par_mid is None:
                 # If we have no parent, pretend the first message in the
                 # thread is the parent.
@@ -292,7 +292,7 @@ class SearchResults(dict):
                                 thread[-1][1] = thread[-1][1][:-len(self._LAST)]
                                 prefix = prefix[:-len(self._BLANK)]
                         render(prefix + self._LAST, kmid)
-        thr_keys = thr_map.keys()
+        thr_keys = list(thr_map.keys())
         thr_keys.sort(key=by_date)
         first = True
         for par_mid in thr_keys:
@@ -308,7 +308,7 @@ class SearchResults(dict):
     PRUNE_MSG_TREE = ('headers', )  # Added by editing_strings
 
     def _prune_msg_tree(self, tree):
-        for k in tree.keys():
+        for k in list(tree.keys()):
             if k not in self.WANT_MSG_TREE or k in self.PRUNE_MSG_TREE:
                 del tree[k]
         for att in tree.get('attachments', []):
@@ -343,7 +343,7 @@ class SearchResults(dict):
             if mbox is not None:
                 info.update({
                     'mail_desc': mbox.describe_msg_by_ptr(msg_ptr),
-                    'mbox_desc': unicode(mbox)})
+                    'mbox_desc': str(mbox)})
             if pf:
                 problems.append(pf.format(**info))
             details["locations"].append(info)
@@ -394,7 +394,7 @@ class SearchResults(dict):
             if problem:
                 problem += ' ' + _('Message may be corrupt!')
             details = {
-                'error': unicode(e),
+                'error': str(e),
                  'details': problem,
                 'traceback': traceback.format_exc(e)}
             details.update(self._troubleshoot_missing_message(email, tree))
@@ -551,7 +551,7 @@ class SearchResults(dict):
         self.add_msg_info(mid, e.get_msg_info(uncached=True),
                           full_threads=True, idxs=idxs)
 
-    def __nonzero__(self):
+    def __bool__(self):
         return True
 
     def next_set(self):
@@ -568,7 +568,7 @@ class SearchResults(dict):
 
     def _fix_width(self, text, width):
         chars = []
-        for c in unicode(text):
+        for c in str(text):
             cwidth = 2 if (unicodedata.east_asian_width(c) in 'WF') else 1
             if cwidth <= width:
                 chars.append(c)
@@ -722,8 +722,8 @@ class Search(Command):
 
         def as_text(self):
             if self.result:
-                if isinstance(self.result, (bool, str, unicode, int, float)):
-                    return unicode(self.result)
+                if isinstance(self.result, (bool, str, int, float)):
+                    return str(self.result)
                 elif isinstance(self.result, (list, set)):
                     return '\n'.join([r.as_text() for r in self.result])
                 elif hasattr(self.result, 'as_text'):
@@ -890,14 +890,14 @@ class Search(Command):
             session.results = list(idx.search(session, session.searched,
                                               context=context).as_set())
 
-            if '*' in self._email_view_pairs.values():
+            if '*' in list(self._email_view_pairs.values()):
                 # If we are auto-choosing which message from a thread to
                 # display, then we want the raw results so we can only
                 # choose from messages that matched our search. We have to
                 # save this, since the sort below may collapse the results.
                 raw_results = list(session.results)
 
-            for pmid, emid in list(self._email_view_pairs.iteritems()):
+            for pmid, emid in list(self._email_view_pairs.items()):
                 # Make sure all our requested messages are amongst results
                 pmid_idx = int(pmid, 36)
                 if pmid_idx not in session.results:
@@ -920,7 +920,7 @@ class Search(Command):
         if self._email_view_pairs:
             new_tids = set(
                 [t._key for t in session.config.get_tags(type='unread')])
-        for pmid, emid in list(self._email_view_pairs.iteritems()):
+        for pmid, emid in list(self._email_view_pairs.items()):
             try:
                 if emid == '*':
                     pmid_idx = int(pmid, 36)
@@ -997,14 +997,14 @@ class Search(Command):
             if term[:4] == 'vfs:':
                 raise ValueError('VFS searches are not cached')
             term = ':'.join(reversed(term.split(':', 1)))
-            return unicode(term)
+            return str(term)
         reqs = set(['!config'] +
                    [fix_term(t) for t in self.session.searched] +
-                   [u'%s:msg' % i for i in msgs])
+                   ['%s:msg' % i for i in msgs])
         if self.session.displayed:
-            reqs |= set(u'%s:thread' % int(tmid, 36) for tmid in
+            reqs |= set('%s:thread' % int(tmid, 36) for tmid in
                         self.session.displayed.get('thread_ids', []))
-            reqs |= set(u'%s:msg' % int(tmid, 36) for tmid in
+            reqs |= set('%s:msg' % int(tmid, 36) for tmid in
                         self.session.displayed.get('message_ids', []))
         return reqs
 
@@ -1257,7 +1257,7 @@ def mailbox_search(config, idx, term, hits):
         mbox_id = None
 
     mailboxes = []
-    for m in config.sys.mailbox.keys():
+    for m in list(config.sys.mailbox.keys()):
         fn = FilePath(config.sys.mailbox[m]).display().lower()
         if (mbox_id == m) or word in fn:
             mailboxes.append(m)

@@ -1,10 +1,5 @@
-# This plugin generates Javascript, HTML or CSS fragments based on the
-# current theme, skin and active plugins.
-#
-# It also takes care of safely downloading random stuff from the Internet,
-# using the appropriate proxying policies.
-#
-from urllib2 import urlopen, HTTPError
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 import mailpile.security as security
 from mailpile.commands import Command
@@ -78,7 +73,7 @@ class JsApi(RenderPage):
 
         created_js = []
         for cls, filename in sorted(list(
-                config.plugins.get_js_classes().iteritems())):
+                config.plugins.get_js_classes().items())):
             try:
                 parts = cls.split('.')[:-1]
                 for i in range(1, len(parts)):
@@ -99,7 +94,7 @@ class JsApi(RenderPage):
                 self._ignore_exception()
 
         for cls, filename in sorted(list(
-                config.plugins.get_css_files().iteritems())):
+                config.plugins.get_css_files().items())):
             try:
                 with open(filename, 'rb') as fd:
                     res['css_files'].append({

@@ -65,8 +65,8 @@ class UpdateCryptoPolicyForUser(CryptoPolicyBaseAction):
 
     def _parse_args(self):
         if self.data:
-            email = unicode(self.data['email'][0])
-            policy = unicode(self.data['policy'][0])
+            email = str(self.data['email'][0])
+            policy = str(self.data['policy'][0])
         else:
             if len(self.args) != 2:
                 return self._error(_('Please provide email address and policy!'))
@@ -102,7 +102,7 @@ class CryptoPolicy(CryptoPolicyBaseAction):
         # Examine each one. The policy is to only attach a key if everyone
         # can use keys AND someone needs a key.
         needs_key = 0
-        for email, vc in who.iteritems():
+        for email, vc in who.items():
 
             if vc and vc.kind == 'profile':
                 continue  # Ignore self

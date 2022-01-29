@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8 :
 #
-from __future__ import print_function
+
 import lxml.etree
 import lxml.html
 import lxml.html.clean

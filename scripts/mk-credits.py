@@ -1,5 +1,5 @@
 #!/usr/bin/env python2.7
-from __future__ import print_function
+
 import os
 import re
 import subprocess
@@ -31,7 +31,7 @@ for line in git_log.stdout:
         info[1] += 1
         authors[author] = info
 git_log.wait()
-authors = [(c, n, e) for n, (e, c) in authors.iteritems()]
+authors = [(c, n, e) for n, (e, c) in authors.items()]
 
 # Get translators from .po files
 for lang in os.listdir('shared-data/locale'):
@@ -65,7 +65,7 @@ with open(code, 'w') as fd:
 with open(i18n, 'w') as fd:
     email = re.compile(r'\s+<[^>]+>')
     first = True
-    langs = translators.keys()
+    langs = list(translators.keys())
     langs.sort(key=lambda l: translators[l][0].lower())
     for lang in langs:
         language, tlist = translators[lang]

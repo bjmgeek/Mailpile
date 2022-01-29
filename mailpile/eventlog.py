@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import copy
 import datetime
 import json
@@ -32,7 +32,7 @@ def NewEventId():
 
 
 def _ClassName(obj, ignore_regexps=False):
-    if isinstance(obj, (str, unicode)):
+    if isinstance(obj, str):
         return str(obj).replace('mailpile.', '.')
     elif hasattr(obj, '__classname__'):
         return str(obj.__classname__).replace('mailpile.', '.')
@@ -89,7 +89,7 @@ class Event(object):
     def _set_ts(self, ts):
         if hasattr(ts, 'timetuple'):
             self._ts = int(time.mktime(ts.timetuple()))
-        elif isinstance(ts, (str, unicode)):
+        elif isinstance(ts, str):
             self._ts = int(mktime_tz(parsedate_tz(ts)))
         else:
             self._ts = float(ts)
@@ -291,11 +291,11 @@ class EventLog(object):
 
     def _match(self, event, filters):
         def compare(val, rule):
-            if isinstance(rule, (str, unicode)):
-                return unicode(val) == unicode(rule)
+            if isinstance(rule, str):
+                return str(val) == str(rule)
             else:
-                return rule.match(unicode(val)) is not None
-        for kw, rule in filters.iteritems():
+                return rule.match(str(val)) is not None
+        for kw, rule in filters.items():
             if kw.endswith('!'):
                 truth, okw, kw = False, kw, kw[:-1]
             else:
@@ -392,7 +392,7 @@ class EventLog(object):
             pass
 
     def _prune_completed(self):
-        for event_id in self._events.keys():
+        for event_id in list(self._events.keys()):
             if Event.COMPLETE in self._events[event_id].flags:
                 del self._events[event_id]
 
@@ -423,7 +423,7 @@ class EventLog(object):
                     # Nothing we can do, no point complaining...
                     pass
             self._prune_completed()
-            self._save_events(self._events.values())
+            self._save_events(list(self._events.values()))
             return self
 
     def purge_old_logfiles(self, keep=None):

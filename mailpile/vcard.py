@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import random
 import threading
 import time
@@ -61,11 +61,11 @@ class VCardLine(dict):
         "\n": "\\n",
         "\r": "\\r",
     }
-    QUOTE_RMAP = dict([(v, k) for k, v in QUOTE_MAP.iteritems()])
+    QUOTE_RMAP = dict([(v, k) for k, v in QUOTE_MAP.items()])
 
     def __init__(self, line=None, name=None, value=None, **attrs):
-        self._name = name and unicode(name).lower() or None
-        self._value = unicode(value)
+        self._name = name and str(name).lower() or None
+        self._value = str(value)
         self._attrs = []
         self._line_id = 0
         for k in attrs:
@@ -84,11 +84,11 @@ class VCardLine(dict):
         set_line_id)
 
     def set_name(self, value):
-        self._name = unicode(value).lower()
+        self._name = str(value).lower()
         self._update_dict()
 
     def set_value(self, value):
-        self._value = unicode(value)
+        self._value = str(value)
         self._update_dict()
 
     def set_attrs(self, value):
@@ -123,7 +123,7 @@ class VCardLine(dict):
         self._update_dict()
 
     def _update_dict(self):
-        for key in self.keys():
+        for key in list(self.keys()):
             dict.__delitem__(self, key)
         dict.update(self, dict(reversed(self._attrs)))
         if self.name:
@@ -147,7 +147,7 @@ class VCardLine(dict):
             if v is None:
                 key += ';%s' % (self.Quote(k))
             else:
-                key += ';%s=%s' % (self.Quote(k), self.Quote(unicode(v)))
+                key += ';%s=%s' % (self.Quote(k), self.Quote(str(v)))
 
         wrapped, line = '', '%s:%s' % (key, self.Quote(self._value))
         llen = 0
@@ -170,7 +170,7 @@ class VCardLine(dict):
         >>> print(VCardLine.Quote('Comma, semicolon; backslash\\ newline\\n'))
         Comma\\, semicolon\\; backslash\\\\ newline\\n
         """
-        return unicode(''.join([self.QUOTE_MAP.get(c, c) for c in text]))
+        return str(''.join([self.QUOTE_MAP.get(c, c) for c in text]))
 
     @classmethod
     def ParseLine(self, text):
@@ -218,7 +218,7 @@ class VCardLine(dict):
                 return parse_char, state, parsed, name, attrs
 
         parser, state, parsed, name, attrs = parse_char, 0, '', None, []
-        for char in unicode(text):
+        for char in str(text):
             parser, state, parsed, name, attrs = parser(
                 char, state, parsed, name, attrs)
 
@@ -530,7 +530,7 @@ class SimpleVCard(object):
             elif create:
                 # A tad inefficient, but avoids artificial ID inflation
                 # and puts a bound on how insanely huge a VCard can get.
-                pids = [p['pid'] for p in cpm.values()]
+                pids = [p['pid'] for p in list(cpm.values())]
                 src_pid = None
                 for pid in range(1, self.MAX_SRC_PID):  # Skip MAX, is default
                     if pid not in pids:
@@ -684,7 +684,7 @@ class SimpleVCard(object):
     def get(self, key, default=None, n=0, prefer=None):
         lines = self.get_all(key)
         if prefer:
-            for k, v in prefer.iteritems():
+            for k, v in prefer.items():
                 llines = [l for l in lines if l.get(k) == v]
                 if llines:
                     lines = llines
@@ -775,23 +775,23 @@ class SimpleVCard(object):
             self.add(VCardLine(name=key, value=value, pref=None))
 
     nickname = property(
-        lambda self: unicode(self._vcard_get('nickname')),
+        lambda self: str(self._vcard_get('nickname')),
         lambda self, e: self._vcard_set('nickname', e))
 
     email = property(
-        lambda self: unicode(self._vcard_get('email')),
+        lambda self: str(self._vcard_get('email')),
         lambda self, e: self._vcard_set('email', e))
 
     kind = property(
-        lambda self: unicode(self._vcard_get('kind')),
+        lambda self: str(self._vcard_get('kind')),
         lambda self, e: self._vcard_set('kind', e))
 
     fn = property(
-        lambda self: unicode(self._vcard_get('fn')),
+        lambda self: str(self._vcard_get('fn')),
         lambda self, e: self._vcard_set('fn', e))
 
     note = property(
-        lambda self: unicode(self._vcard_get('note')),
+        lambda self: str(self._vcard_get('note')),
         lambda self, e: self._vcard_set('note', e.replace('\n', ' ')))
 
 
@@ -832,7 +832,7 @@ class MailpileVCard(SimpleVCard):
 
     def _mpcdict(self, vcl):
         d = {}
-        for k in vcl.keys():
+        for k in list(vcl.keys()):
             if k not in ('line_id', ):
                 if k.startswith('x-mailpile-'):
                     d[k[len('x-mailpile-'):]] = vcl[k]
@@ -1070,7 +1070,7 @@ class MailpileVCard(SimpleVCard):
     def get_source_by_proto(self, protocol, create=False, name=None):
         my_rid = self.random_uid
         source = None
-        for src_id, src in self.config.sources.iteritems():
+        for src_id, src in self.config.sources.items():
             if src.profile == my_rid and src.protocol == protocol:
                 if not name or src.name == name:
                     source = src
@@ -1116,11 +1116,11 @@ class MailpileVCard(SimpleVCard):
 class AddressInfo(dict):
 
     fn = property(
-        lambda self: unicode(self['fn']),
+        lambda self: str(self['fn']),
         lambda self, v: self.__setitem__('fn', v))
 
     address = property(
-        lambda self: unicode(self['address']),
+        lambda self: str(self['address']),
         lambda self, v: self.__setitem__('address', v))
 
     rank = property(
@@ -1605,7 +1605,7 @@ class VCardImporter(VCardPluginClass):
                     counter = 0
 
         session.ui.mark(_('Saving %d updated vCards') % len(updated))
-        for vcard in updated.values():
+        for vcard in list(updated.values()):
             vcard.save()
             if not kwargs.get('fast'):
                 counter += 1

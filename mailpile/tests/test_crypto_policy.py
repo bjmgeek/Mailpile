@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 from mailpile.vcard import MailpileVCard, VCardLine
 from mailpile.tests import MailPileUnittest
 

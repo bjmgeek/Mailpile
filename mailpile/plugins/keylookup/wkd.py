@@ -1,7 +1,7 @@
 import hashlib
 import ssl
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 
 from mailpile.security import secure_urlget
 from mailpile.commands import Command
@@ -63,7 +63,7 @@ def WebKeyDirectoryURLs(address, plusmagic=True):
             yield urlfmt % {
                 'd': domain,  # FIXME: Should this be punycoded?
                 'l': lpe,
-                'q': urllib.urlencode({'l': lp})}
+                'q': urllib.parse.urlencode({'l': lp})}
 
 
 #  Support for Web Key Directory (WKD) lookup for keys.
@@ -161,7 +161,7 @@ class WKDLookupHandler(LookupHandler):
                     break
                 else:
                     error = 'Key not found'
-            except urllib2.HTTPError as e:
+            except urllib.error.HTTPError as e:
                 if e.code == 404 and '+' not in address:
                     error = '404: %s' % e
                     # Since we are testing openpgpkey.* first, if we actually get a
@@ -172,7 +172,7 @@ class WKDLookupHandler(LookupHandler):
                     error = str(e)
             except ssl.CertificateError as e:
                 error = 'TLS: %s' % e
-            except (urllib2.URLError, ValueError, KeyError) as e:
+            except (urllib.error.URLError, ValueError, KeyError) as e:
                 error = 'FAIL: %s' % e
 
         if not error and len(key_data) > self.MAX_KEY_SIZE:

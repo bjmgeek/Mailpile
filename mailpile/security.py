@@ -6,7 +6,7 @@ security related decisions made by the app, in order to facilitate
 review and testing.
 
 """
-from __future__ import print_function
+
 import copy
 import hashlib
 import json
@@ -177,7 +177,7 @@ def secure_urlget(session, url,
                   data=None, timeout=30, anonymous=False, maxbytes=None,
                   padding=True):
     from mailpile.conn_brokers import Master as ConnBroker
-    from urllib2 import build_opener
+    from urllib.request import build_opener
 
     if session.config.prefs.web_content not in ("on", "anon"):
         raise IOError("Web content is disabled by policy")
@@ -467,7 +467,7 @@ def tls_sock_cert_sha256(sock=None, cert=None):
         peer_cert = cert
 
     if peer_cert:
-        return unicode(
+        return str(
             hashlib.sha256(peer_cert).digest().encode('base64').strip())
     else:
         return None
@@ -635,7 +635,7 @@ def evaluate_sender_trust(config, email, tree):
     # the same day as the message was received, to not be fooled by other
     # junk that arrived the same day.
     days = config.prefs.key_trust.window_days
-    msgts = long(email.get_msg_info(config.index.MSG_DATE), 36)
+    msgts = int(email.get_msg_info(config.index.MSG_DATE), 36)
     end = msgts - (24 * 3600)
     begin = end - (days * 24 * 3600)
     scope = ['dates:%d..%d' % (begin, end), 'from:%s' % sender]

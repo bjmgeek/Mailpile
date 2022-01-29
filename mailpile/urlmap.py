@@ -1,8 +1,8 @@
-from __future__ import print_function
+
 import cgi
 import time
-from urlparse import parse_qs, urlparse
-from urllib import quote, urlencode
+from urllib.parse import parse_qs, urlparse
+from urllib.parse import quote, urlencode
 
 import mailpile.auth
 import mailpile.security as security
@@ -117,8 +117,8 @@ class UrlMap:
 
         if command.HTTP_STRICT_VARS:
             prefixes = ['ui_'] + [vn[:-1] for vn in
-                                  (command.HTTP_QUERY_VARS.keys() +
-                                   command.HTTP_POST_VARS.keys())
+                                  (list(command.HTTP_QUERY_VARS.keys()) +
+                                   list(command.HTTP_POST_VARS.keys()))
                                   if vn[-1:] == '*']
 
             copy_q = []
@@ -152,8 +152,8 @@ class UrlMap:
                         (post_data and var in post_data)):
                     raise BadDataError('Bad variable (%s): %s' % (var, name))
 
-            copy_vars = (((query_data or {}).keys(), query_data),
-                         ((post_data or {}).keys(), post_data),
+            copy_vars = ((list((query_data or {}).keys()), query_data),
+                         (list((post_data or {}).keys()), post_data),
                          (['arg'], query_data))
 
         data = {
@@ -306,7 +306,7 @@ class UrlMap:
         UsageError: Not available for GET: message/update
         """
         output = self._choose_output(path_parts, fmt=fmt)
-        for bp in reversed(range(1, len(path_parts) + 1)):
+        for bp in reversed(list(range(1, len(path_parts) + 1))):
             try:
                 return [
                     output,
@@ -472,7 +472,7 @@ class UrlMap:
         from mailpile.plugins.setup_magic import Setup
 
         if method.lower() == 'get':
-            qd = [(k, v) for k, vl in query_data.iteritems() for v in vl]
+            qd = [(k, v) for k, vl in query_data.items() for v in vl]
             if '_path' not in query_data:
                 qd.append(('_path', path))
         else:
@@ -514,7 +514,7 @@ class UrlMap:
             if tag is None:
                 raise KeyError('oops')
         except (KeyError, IndexError):
-            tag = [t for t in self.config.tags.values()
+            tag = [t for t in list(self.config.tags.values())
                    if t.slug == tag_id.lower()]
             tag = tag and tag[0]
         if tag:
@@ -603,7 +603,7 @@ class UrlMap:
                 url = self.canonical_url(cls)
                 query_vars = cls.HTTP_QUERY_VARS
                 pos_args = (cls.SYNOPSIS[3] and
-                            unicode(cls.SYNOPSIS[3]).replace(' ', '/') or '')
+                            str(cls.SYNOPSIS[3]).replace(' ', '/') or '')
                 padding = ' ' * (18 - len(command[0]))
                 newline = '\n' + ' ' * (len(api) + len(command[0]) + 6)
                 if query_vars:

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import errno
 import mailbox
 import os
@@ -111,7 +111,7 @@ class MailpileMailbox(mailbox.mbox):
 
     def toc_values(self):
         self.update_toc()
-        return self._toc.values()
+        return list(self._toc.values())
 
     def update_toc(self):
         fd = self._get_fd()
@@ -420,7 +420,7 @@ Content-Length: %(length)s
         if verbose or wait:
             print('Temporary mailbox in: %s' % tf.name)
         if wait:
-            raw_input('Press ENTER to continue...')
+            input('Press ENTER to continue...')
 
         pmbx = mailbox.mbox(tf.name)
         mmbx = MailpileMailbox(tf.name)
@@ -476,7 +476,7 @@ Content-Length: %(length)s
         # This is formatted to look like doctest results...
         print('TestResults(failed=%d, attempted=%d)' % (problems, tests))
         if wait:
-            raw_input('Tests finished. Press ENTER to clean up...')
+            input('Tests finished. Press ENTER to clean up...')
 
     if problems:
         sys.exit(1)

@@ -6,7 +6,7 @@
 # If run with -i as the first argument, it will then drop to an interactive
 # python shell for experimenting and manual testing.
 #
-from __future__ import print_function
+
 import os
 import sys
 import time
@@ -33,10 +33,10 @@ from mailpile.mail_source.local import LocalMailSource
 
 ##[ Black-box test script ]###################################################
 
-FROM_BRE = [u'from:r\xfanar', u'from:bjarni']
-ICELANDIC = u'r\xfanar'
-IS_CHARS = (u'\xe1\xe9\xed\xf3\xfa\xfd\xfe\xe6\xf6\xf0\xc1\xc9\xcd\xd3'
-            u'\xda\xdd\xde\xc6\xd6\xd0')
+FROM_BRE = ['from:r\xfanar', 'from:bjarni']
+ICELANDIC = 'r\xfanar'
+IS_CHARS = ('\xe1\xe9\xed\xf3\xfa\xfd\xfe\xe6\xf6\xf0\xc1\xc9\xcd\xd3'
+            '\xda\xdd\xde\xc6\xd6\xd0')
 MY_FROM = 'team+testing@mailpile.is'
 MY_NAME = 'Mailpile Team'
 MY_KEYID = '0x7848252F'
@@ -131,7 +131,7 @@ def test_vcards():
     # Do we have a Mr. Rogers contact?
     mp.rescan('vcards')
     assert(mp.contacts_view('mr@rogers.com'
-                            ).result['contact']['fn'] == u'Mr. Rogers')
+                            ).result['contact']['fn'] == 'Mr. Rogers')
     assert(len(mp.contacts('rogers').result['contacts']) == 1)
 
 
@@ -177,8 +177,8 @@ def test_load_save_rescan():
                    ['from:barnaby', 'subject:testing', 'soup',
                     'tag:mp_sig-unknown', 'tag:mp_enc-decrypted'],
                    ['from:square', 'subject:here', '-has:attachment'],
-                   [u'subject:' + IS_CHARS, 'subject:8859'],
-                   [u'subject:' + IS_CHARS, 'subject:UTF'],
+                   ['subject:' + IS_CHARS, 'subject:8859'],
+                   ['subject:' + IS_CHARS, 'subject:UTF'],
                    ['use_libusb', 'unsubscribe', 'vger'],
                    ):
         say('Searching for: %s' % search)

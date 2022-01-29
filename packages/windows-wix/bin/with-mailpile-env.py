@@ -60,8 +60,7 @@ if __name__ == '__main__':
     for key in ("PATH", "PYTHONPATH" ):
         try:
             paths = list( path_additions )
-            paths.extend( filter( lambda path: path not in path_additions,
-                                  os.environ[ key ].split( ';' ) ) )
+            paths.extend( [path for path in os.environ[ key ].split( ';' ) if path not in path_additions] )
             os.environ[ key ] = ';'.join( paths )
         except KeyError:
             os.environ[ key ] = ';'.join( path_additions )
@@ -100,5 +99,5 @@ if __name__ == '__main__':
     try:
         subprocess.check_call( invoke, shell = True, **redirects )
     finally:
-        for handle in redirects.values():
+        for handle in list(redirects.values()):
             handle.close()

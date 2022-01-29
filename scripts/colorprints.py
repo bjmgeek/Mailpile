@@ -24,7 +24,7 @@
 # is shifted by a fixed value derived from the MD5 of the original
 # fingerprint.
 #
-from __future__ import print_function
+
 import datetime
 import os
 import hashlib

@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8 :
 #
-from __future__ import print_function
+
 import base64
 import copy
 import quopri
@@ -64,8 +64,8 @@ class AddressHeaderParser(list):
     u'b@c.x'
     """
 
-    TEST_UNICODE_DATA = u'Bjarni R\xfanar <b@c.x#61A015763D28D4>'
-    TEST_UNICODE_NAME = u'Bjarni R\xfanar'
+    TEST_UNICODE_DATA = 'Bjarni R\xfanar <b@c.x#61A015763D28D4>'
+    TEST_UNICODE_NAME = 'Bjarni R\xfanar'
     TEST_HEADER_DATA = """
         bre@klaki.net  ,
         bre@klaki.net Bjarni ,
@@ -324,7 +324,7 @@ class AddressHeaderParser(list):
         # We search from the end, to make the algorithm stable in the case
         # that the name part also starts with a < (is that allowed?).
         #
-        for i in reversed(range(0, len(g))):
+        for i in reversed(list(range(0, len(g)))):
             if g[i][:1] == '<' and g[i][-1:] == '>':
                 maybemail = munger(g[i][1:-1])
                 if re.match(self.RE_MAYBE_EMAIL, maybemail):

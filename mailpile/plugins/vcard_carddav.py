@@ -1,6 +1,6 @@
 #coding:utf-8
 import base64
-import httplib
+import http.client
 import sys
 import re
 import getopt
@@ -42,10 +42,10 @@ class DAVClient:
 
     def request(self, url, method, headers={}, body=""):
         if self.protocol == "https":
-            req = httplib.HTTPSConnection(self.host, self.port)
+            req = http.client.HTTPSConnection(self.host, self.port)
             # FIXME: Verify HTTPS certificate
         else:
-            req = httplib.HTTPConnection(self.host, self.port)
+            req = http.client.HTTPConnection(self.host, self.port)
 
         req.putrequest(method, url)
         req.putheader("Host", self.host)
@@ -53,7 +53,7 @@ class DAVClient:
         if self.auth:
             req.putheader("Authorization", "Basic %s" % self.auth)
 
-        for key, value in headers.iteritems():
+        for key, value in headers.items():
             req.putheader(key, value)
 
         req.endheaders()

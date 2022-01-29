@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 # Plugins!
 import imp
 import inspect
@@ -94,7 +94,7 @@ class PluginManager(object):
 
     def __init__(self, plugin_name=None, builtin=False, deprecated=False,
                  config=None, session=None):
-        if builtin and isinstance(builtin, (str, unicode)):
+        if builtin and isinstance(builtin, str):
             builtin = os.path.basename(builtin)
             for ignore in ('.py', '.pyo', '.pyc'):
                 if builtin.endswith(ignore):
@@ -153,13 +153,13 @@ class PluginManager(object):
         return self
 
     def available(self):
-        return self.BUILTIN[:] + self.DISCOVERED.keys()
+        return self.BUILTIN[:] + list(self.DISCOVERED.keys())
 
     def loadable(self):
-        return self.BUILTIN[:] + self.RENAMED.keys() + self.DISCOVERED.keys()
+        return self.BUILTIN[:] + list(self.RENAMED.keys()) + list(self.DISCOVERED.keys())
 
     def loadable_early(self):
-        return [k for k, (n, m) in self.DISCOVERED.iteritems()
+        return [k for k, (n, m) in self.DISCOVERED.items()
                 if not m.get('require_login', True)]
 
     def _import(self, full_name, full_path):
@@ -246,7 +246,7 @@ class PluginManager(object):
             self.loading_builtin = False
 
     def process_shutdown_hooks(self):
-        for plugin_name in self.DISCOVERED.keys():
+        for plugin_name in list(self.DISCOVERED.keys()):
             try:
                 package = 'mailpile.plugins.%s' % plugin_name
                 _, manifest = self.DISCOVERED[plugin_name]
@@ -281,7 +281,7 @@ class PluginManager(object):
         return mf
 
     def _mf_iteritems(self, mf, *path):
-        return self._mf_path(mf, *path).iteritems()
+        return iter(self._mf_path(mf, *path).items())
 
     def _get_method(self, full_name, method):
         full_method_name = '.'.join([full_name, method])
@@ -457,14 +457,14 @@ class PluginManager(object):
             reg_job(info, 'slow', self.register_slow_periodic_job)
 
         ucfull_name = full_name.capitalize()
-        for ui_type, elems in manifest.get('user_interface', {}).iteritems():
+        for ui_type, elems in manifest.get('user_interface', {}).items():
             for hook in elems:
                 if 'javascript_setup' in hook:
                     js = hook['javascript_setup']
                     if not js.startswith('Mailpile.'):
                        hook['javascript_setup'] = '%s.%s' % (ucfull_name, js)
                 if 'javascript_events' in hook:
-                    for event, call in hook['javascript_events'].iteritems():
+                    for event, call in hook['javascript_events'].items():
                         if not call.startswith('Mailpile.'):
                             hook['javascript_events'][event] = '%s.%s' \
                                 % (ucfull_name, call)
@@ -491,7 +491,7 @@ class PluginManager(object):
 
             where = '->'.join(['%s:%s' % ('/'.join(stack[i][1].split('/')[-2:]),
                                           stack[i][2])
-                              for i in reversed(range(2, len(stack)-1))])
+                              for i in reversed(list(range(2, len(stack)-1)))])
             print(('FIXME: Deprecated use of %s at %s (issue #547)'
                    ) % (stack[1][3], where))
 
@@ -511,7 +511,7 @@ class PluginManager(object):
         path = '/'.join(args)
         for arg in args:
             dest = dest[arg][-1]
-        for rname, rule in rules.iteritems():
+        for rname, rule in rules.items():
             if rname in dest:
                 raise PluginError('Variable already exist: %s/%s' % (path, rname))
             else:
@@ -606,15 +606,15 @@ class PluginManager(object):
 
     def get_data_kw_extractors(self):
         self._compat_check(strict=False)
-        return self.DATA_KW_EXTRACTORS.values()
+        return list(self.DATA_KW_EXTRACTORS.values())
 
     def get_text_kw_extractors(self):
         self._compat_check(strict=False)
-        return self.TEXT_KW_EXTRACTORS.values()
+        return list(self.TEXT_KW_EXTRACTORS.values())
 
     def get_meta_kw_extractors(self):
         self._compat_check(strict=False)
-        return self.META_KW_EXTRACTORS.values()
+        return list(self.META_KW_EXTRACTORS.values())
 
 
     ##[ Pluggable search terms ]##############################################
@@ -798,7 +798,7 @@ class PluginManager(object):
                 "javascript_events": javascript_events,
                 "url": url
             }
-            for k, v in kwargs.iteritems():
+            for k, v in kwargs.items():
                 info[k] = v
             self.UI_ELEMENTS[ui_type].append(info)
         else:

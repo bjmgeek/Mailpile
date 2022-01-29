@@ -12,9 +12,9 @@ import json
 import copy
 
 try:
-    check = unicode
+    check = str
 except NameError:
-    unicode = str
+    str = str
 
 
 def format_pod(template, **kwargs):
@@ -23,8 +23,8 @@ def format_pod(template, **kwargs):
     '''
     if isinstance(template, dict):
         template = {format_pod(key, **kwargs): format_pod(value, **kwargs)
-                    for (key, value) in template.items()}
-    elif isinstance(template, str) or isinstance(template, unicode):
+                    for (key, value) in list(template.items())}
+    elif isinstance(template, str) or isinstance(template, str):
         template = template.format(**kwargs)
     elif isinstance(template, list):
         template = [format_pod(value, **kwargs) for value in template]
@@ -90,7 +90,7 @@ def bind(build):
 
         # sign binary content
         #
-        for path in content_paths.values():
+        for path in list(content_paths.values()):
             if os.path.exists(path):
                 build.invoke('sign_tree', path)
 

@@ -45,7 +45,7 @@ def migrate_routes(session):
     def make_route_name(route_dict):
         # This will always return the same hash, no matter how Python
         # decides to order the dict internally.
-        return md5_hex(str(sorted(list(route_dict.iteritems()))))[:8]
+        return md5_hex(str(sorted(list(route_dict.items()))))[:8]
 
     if session.config.prefs.get('default_route'):
         route_dict = route_parse(session.config.prefs.default_route)
@@ -154,7 +154,7 @@ def migrate_cleanup(session):
     config = session.config
 
     # Clean the autotaggers
-    autotaggers = [t for t in config.prefs.autotag.values() if t.tagger]
+    autotaggers = [t for t in list(config.prefs.autotag.values()) if t.tagger]
     config.prefs.autotag = autotaggers
 
     # Clean the vcards:
@@ -215,7 +215,7 @@ class Migrate(Command):
                 migrations.append(MIGRATIONS[a])
             else:
                 raise UsageError(_('Unknown migration: %s (available: %s)'
-                                   ) % (a, ', '.join(MIGRATIONS.keys())))
+                                   ) % (a, ', '.join(list(MIGRATIONS.keys()))))
 
         if not migrations:
             migrations = ((before_setup and MIGRATIONS_BEFORE_SETUP or []) +

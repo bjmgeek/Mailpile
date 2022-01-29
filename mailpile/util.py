@@ -2,7 +2,7 @@
 #
 # Misc. utility functions for Mailpile.
 #
-from __future__ import print_function
+
 import cgi
 import copy
 import ctypes
@@ -20,8 +20,8 @@ import sys
 import tempfile
 import threading
 import time
-import StringIO
-import cStringIO
+import io
+import io
 from distutils import spawn
 
 from mailpile.i18n import gettext as _
@@ -134,19 +134,19 @@ PROVISIONAL_URI_SCHEMES = set([
 URI_SCHEMES = PERMANENT_URI_SCHEMES.union(PROVISIONAL_URI_SCHEMES)
 
 UNI_BOX_FLIPS = [
-    (u'\u250c', u'\u2514'), (u'\u250d', u'\u2515'), (u'\u250e', u'\u2516'),
-    (u'\u250f', u'\u2517'), (u'\u2510', u'\u2518'), (u'\u2511', u'\u2519'),
-    (u'\u2512', u'\u251a'), (u'\u2513', u'\u251b'), (u'\u251d', u'\u251f'),
-    (u'\u2521', u'\u2522'), (u'\u2526', u'\u2527'), (u'\u2529', u'\u252a'),
-    (u'\u252c', u'\u2534'), (u'\u252d', u'\u2535'), (u'\u252e', u'\u2536'),
-    (u'\u252f', u'\u2537'), (u'\u2530', u'\u2538'), (u'\u2531', u'\u2539'),
-    (u'\u2532', u'\u253a'), (u'\u2533', u'\u253b'), (u'\u2543', u'\u2545'),
-    (u'\u2544', u'\u2546'), (u'\u2547', u'\u2548'), (u'\u2552', u'\u2558'),
-    (u'\u2553', u'\u2559'), (u'\u2554', u'\u255a'), (u'\u2555', u'\u255b'),
-    (u'\u2556', u'\u255c'), (u'\u2557', u'\u255d'), (u'\u2564', u'\u2567'),
-    (u'\u2565', u'\u2568'), (u'\u2566', u'\u2569'), (u'\u256d', u'\u2570'),
-    (u'\u256e', u'\u256f'), (u'\u2571', u'\u2572'), (u'\u2575', u'\u2577'),
-    (u'\u2579', u'\u257a'), (u'\u257d', u'\u257f')
+    ('\u250c', '\u2514'), ('\u250d', '\u2515'), ('\u250e', '\u2516'),
+    ('\u250f', '\u2517'), ('\u2510', '\u2518'), ('\u2511', '\u2519'),
+    ('\u2512', '\u251a'), ('\u2513', '\u251b'), ('\u251d', '\u251f'),
+    ('\u2521', '\u2522'), ('\u2526', '\u2527'), ('\u2529', '\u252a'),
+    ('\u252c', '\u2534'), ('\u252d', '\u2535'), ('\u252e', '\u2536'),
+    ('\u252f', '\u2537'), ('\u2530', '\u2538'), ('\u2531', '\u2539'),
+    ('\u2532', '\u253a'), ('\u2533', '\u253b'), ('\u2543', '\u2545'),
+    ('\u2544', '\u2546'), ('\u2547', '\u2548'), ('\u2552', '\u2558'),
+    ('\u2553', '\u2559'), ('\u2554', '\u255a'), ('\u2555', '\u255b'),
+    ('\u2556', '\u255c'), ('\u2557', '\u255d'), ('\u2564', '\u2567'),
+    ('\u2565', '\u2568'), ('\u2566', '\u2569'), ('\u256d', '\u2570'),
+    ('\u256e', '\u256f'), ('\u2571', '\u2572'), ('\u2575', '\u2577'),
+    ('\u2579', '\u257a'), ('\u257d', '\u257f')
 ]
 UNI_BOX_FLIP = dict(UNI_BOX_FLIPS + [(b, a) for a, b in UNI_BOX_FLIPS])
 
@@ -157,7 +157,7 @@ def WhereAmI(start=1):
     stack = inspect.stack()
     return '%s' % '->'.join(
         ['%s:%s' % ('/'.join(stack[i][1].split('/')[-2:]), stack[i][2])
-         for i in reversed(range(start, len(stack)-1))])
+         for i in reversed(list(range(start, len(stack)-1)))])
 
 
 def _TracedLock(what, *a, **kw):
@@ -347,7 +347,7 @@ def flip_unicode_boxes(text):
 def _hash(cls, data):
     h = cls()
     for s in data:
-        if isinstance(s, unicode):
+        if isinstance(s, str):
             h.update(s.encode('utf-8'))
         else:
             h.update(s)
@@ -451,7 +451,7 @@ def string_to_rank(text, maxint=sys.maxsize):
     for pos in range(0, min(15, len(rs))):
         rank += frac * (int(rs[pos], 36) / (36.0 + 0.09 * pos))
         frac *= 1.0 / (36-pos)
-    return long(rank * (maxint - 100)) + min(100, len(text))
+    return int(rank * (maxint - 100)) + min(100, len(text))
 
 
 def string_to_intlist(text):
@@ -495,7 +495,7 @@ def truthy(txt, default=False, special=None):
     except (ValueError, TypeError):
         pass
 
-    txt = unicode(txt).lower()
+    txt = str(txt).lower()
     if special is not None and txt in special:
         return special[txt]
     elif txt in ('n', 'no', 'false', 'off'):
@@ -789,7 +789,7 @@ def backup_file(filename, backups=5, min_age_delta=0):
         if os.stat(filename).st_mtime >= time.time() - min_age_delta:
             return
 
-        for ver in reversed(range(1, backups)):
+        for ver in reversed(list(range(1, backups))):
             bf = '%s.%d' % (filename, ver)
             if os.path.exists(bf):
                 nbf = '%s.%d' % (filename, ver+1)
@@ -814,7 +814,7 @@ def get_free_disk_bytes(dirname):
 
 def json_helper(obj):
     try:
-        return unicode(obj)
+        return str(obj)
     except:
         return "COMPLEXBLOB"
 
@@ -905,9 +905,9 @@ def play_nice_with_threads(sleep=True, weak=False, deadline=None):
     return delay
 
 
-class PeekableStringIO(StringIO.StringIO):
+class PeekableStringIO(io.StringIO):
     def peek(self, n):
-        StringIO._complain_ifclosed(self.closed)
+        io._complain_ifclosed(self.closed)
         if self.buflist:
             self.buf += ''.join(self.buflist)
             self.buflist = []
@@ -965,7 +965,7 @@ def image_size(img_data, pure_python=False):
         if imgsize is not None:
             return imgsize.get_size(PeekableStringIO(img_data))
         if Image is not None and not pure_python:
-            return Image.open(cStringIO.StringIO(img_data)).size
+            return Image.open(io.StringIO(img_data)).size
     except (ValueError, imgsize.UnknownSize):
         pass
     return None
@@ -990,18 +990,18 @@ def thumbnail(fileobj, output_fd, height=None, width=None):
         return None
 
     # Ensure the source image is either a file-like object or a StringIO
-    if (not isinstance(fileobj, (file, StringIO.StringIO))):
-        fileobj = cStringIO.StringIO(fileobj)
+    if (not isinstance(fileobj, (file, io.StringIO))):
+        fileobj = io.StringIO(fileobj)
 
     image = Image.open(fileobj)
     fmt = image.format
 
     # If we have Exif rotation data, make use of it
     try:
-        for orientation in ExifTags.TAGS.keys():
+        for orientation in list(ExifTags.TAGS.keys()):
             if ExifTags.TAGS[orientation]=='Orientation':
                 break
-        exif=dict(image._getexif().items())
+        exif=dict(list(image._getexif().items()))
         if exif[orientation] == 3:
             image = image.rotate(180, expand=True)
         elif exif[orientation] == 6:
@@ -1090,7 +1090,7 @@ class CleanText:
         return str(self.clean)
 
     def __unicode__(self):
-        return unicode(self.clean)
+        return str(self.clean)
 
 
 def HideBinary(text):
@@ -1150,7 +1150,7 @@ def RunTimed(timeout, func, *args, **kwargs):
     RunTimedThread(func.__name__, work, unique=unique).run_timed(timeout)
     if exception:
         t, v, tb = exception[0]
-        raise t, v, tb
+        raise t(v).with_traceback(tb)
     return result[0]
 
 

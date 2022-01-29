@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from __future__ import generators
-from __future__ import print_function
+
+
 
 # An implementation of a Bayes-like spam classifier.
 #
@@ -477,7 +477,7 @@ class Classifier:
             last = token
 
     def _wordinfokeys(self):
-        return self.wordinfo.keys()
+        return list(self.wordinfo.keys())
 
 
 Bayes = Classifier

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import os
 import socket
 import re
@@ -8,7 +8,7 @@ try:
 except ImportError:
     pass
 
-from urlparse import urlparse
+from urllib.parse import urlparse
 
 from mailpile.i18n import gettext as _
 from mailpile.i18n import ngettext as n
@@ -62,7 +62,7 @@ def SlugCheck(slug, allow=''):
         ...
     ValueError: Invalid URL slug: Bad/Slug
     """
-    if not slug == CleanText(unicode(slug),
+    if not slug == CleanText(str(slug),
                              banned=(CleanText.NONDNS.replace(allow, ''))
                              ).clean:
         raise ValueError(_('Invalid URL slug: %s') % slug)
@@ -175,7 +175,7 @@ def NotUnicode(string):
     """
     Make sure a string is NOT unicode.
     """
-    if isinstance(string, unicode):
+    if isinstance(string, str):
         string = string.encode('utf-8')
     if not isinstance(string, str):
         return str(string)
@@ -194,7 +194,7 @@ def PathCheck(path):
         ...
     ValueError: File/directory does not exist: /no/such/path
     """
-    if isinstance(path, unicode):
+    if isinstance(path, str):
         path = path.encode('utf-8')
     path = os.path.expanduser(path)
     if not os.path.exists(path):

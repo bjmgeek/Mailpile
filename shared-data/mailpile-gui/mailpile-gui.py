@@ -17,7 +17,7 @@
 #       a splash-screen. Arguably, more of this logic should be moved
 #       into `mailpile.plugins.gui` so everything is in one place.
 #
-from __future__ import print_function
+
 import copy
 import fasteners
 import json
@@ -25,7 +25,7 @@ import os
 import sys
 import subprocess
 import threading
-from cStringIO import StringIO
+from io import StringIO
 
 from mailpile.config.base import ConfigDict
 from mailpile.config.defaults import CONFIG_RULES

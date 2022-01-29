@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 #coding:utf-8
-from __future__ import print_function
+
 import sys
 import re
 import getopt
@@ -309,14 +309,14 @@ class MorkImporter(VCardImporter):
 
     def morkToHash(self):
         results = []
-        columns = self.db.cdict.keys()
+        columns = list(self.db.cdict.keys())
         columns.sort(hexcmp)
 
-        tables = self.db.tables.keys()
+        tables = list(self.db.tables.keys())
         tables.sort(hexcmp)
 
         for table in [self.db.tables[k] for k in tables]:
-            rows = table.rows.keys()
+            rows = list(table.rows.keys())
             rows.sort(hexcmp)
             for row in [table.rows[k] for k in rows]:
                 email = name = ""

@@ -53,7 +53,7 @@ import datetime
 import re
 import time
 import traceback
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 from email import encoders
 from email.mime.base import MIMEBase
 
@@ -371,7 +371,7 @@ class AutocryptSearch(Command):
                        for e in args if canonicalize_email(e) in db)
 
         if results:
-            return self._success(_("Found %d results") % len(results.keys()),
+            return self._success(_("Found %d results") % len(list(results.keys())),
                                  results)
         else:
             return self._error(_("Not found"), results)
@@ -618,7 +618,7 @@ if __name__ == "__main__":
     import doctest
 
     results = doctest.testmod(optionflags=doctest.ELLIPSIS)
-    print '%s' % (results, )
+    print('%s' % (results, ))
     if results.failed:
         sys.exit(1)
 

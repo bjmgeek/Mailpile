@@ -1,7 +1,7 @@
 import email.generator
 import email.message
 import mailbox
-import StringIO
+import io
 import sys
 
 import mailpile.mailboxes
@@ -71,7 +71,7 @@ class MailpileMailbox(UnorderedPicklable(mailbox.Maildir, editable=True)):
         with self._lock:
             mailbox.Maildir._refresh(self)
             # WERVD mail names don't have dots in them
-            for t in [k for k in self._toc.keys() if '.' in k]:
+            for t in [k for k in list(self._toc.keys()) if '.' in k]:
                 del self._toc[t]
         safe_remove()  # Try to remove any postponed removals
 
@@ -101,7 +101,7 @@ class MailpileMailbox(UnorderedPicklable(mailbox.Maildir, editable=True)):
 
     def get_file(self, key):
         with self._lock:
-            return StringIO.StringIO(self.get_string(key))
+            return io.StringIO(self.get_string(key))
 
     def get_metadata_keywords(self, toc_id):
         subdir, name = os.path.split(self._lookup(toc_id))

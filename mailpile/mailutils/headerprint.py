@@ -1,6 +1,6 @@
 # vim: set fileencoding=utf-8 :
 #
-from __future__ import print_function
+
 import re
 from mailpile.util import md5_hex
 
@@ -84,7 +84,7 @@ def HeaderPrintMUADetails(message, mta=None):
 
 def HeaderPrintGenericDetails(message, which=MUA_HP_HEADERS):
     """Extract message details which may help identify the MUA."""
-    return [k for k, v in message.items() if k.lower() in which]
+    return [k for k, v in list(message.items()) if k.lower() in which]
 
 
 def HeaderPrints(message):
